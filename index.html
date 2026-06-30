@@ -178,6 +178,15 @@ td{padding:10px 14px;vertical-align:middle;}
   </div>
   <div class="header-right">
     <span class="today-badge" id="today-badge"></span>
+    <button class="btn-header" onclick="exportData()" title="Descargar copia de seguridad">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Exportar</span>
+    </button>
+    <button class="btn-header" onclick="document.getElementById('import-file').click()" title="Restaurar copia de seguridad">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span>Importar</span>
+    </button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
     <button class="btn-header" id="gcal-btn" onclick="toggleGCal()">
       <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       <span id="gcal-label">Conectar Calendar</span>
@@ -471,13 +480,146 @@ function fmtDate(d){if(!d)return'—';const[y,m,day]=d.split('-');const ms=['ene
 function fmtDateLong(d){if(!d)return'—';return new Date(d+'T00:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});}
 function fmtMoney(n){return'$'+Number(n||0).toLocaleString('es-AR');}
 
-// ── DATA ──────────────────────────────────────────────────────────────
+// ── DATA (SUPABASE) ─────────────────────────────────────────────────
+const SUPABASE_URL = 'https://czhkhmexmfoqijczaauf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aGtobWV4bWZvcWlqY3phYXVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NzI4ODgsImV4cCI6MjA5ODM0ODg4OH0.PKM93io5PhuzN-3xltGyE_kHMZQufEoe8furKxn93a4';
+
 let alumnos=[], nextId=1;
-function load(){
-  try{const s=localStorage.getItem('impulse_alumnos');if(s){alumnos=JSON.parse(s);nextId=Math.max(...alumnos.map(a=>a.id))+1;}else{alumnos=[];}}
-  catch(e){alumnos=[];}
+
+function dbHeaders(extra={}){
+  return {
+    'apikey': SUPABASE_ANON_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+    'Content-Type': 'application/json',
+    ...extra
+  };
 }
-function save(){try{localStorage.setItem('impulse_alumnos',JSON.stringify(alumnos));}catch(e){}}
+
+// Convert DB row (lowercase cols) -> app object
+function rowToAlumno(r){
+  return {
+    id: r.id,
+    nombre: r.nombre || '',
+    apellido: r.apellido || '',
+    tel: r.tel || '',
+    email: r.email || '',
+    medico: r.medico || '',
+    plan: r.plan || 'Base',
+    tipo: r.tipo || 'Mensual',
+    monto: r.monto || '',
+    venc: r.venc || '',
+    fechaplan: r.fechaplan || '',
+    lesion: r.lesion || 0,
+    notasplan: r.notasplan || '',
+    manual: r.manual || '📝 Sin definir',
+    asistencia: r.asistencia || {},
+    calSynced: r.calsynced || null,
+    calEventIds: r.caleventids || null,
+    ultimoPago: r.ultimopago || '',
+    pagado: r.pagado || false,
+  };
+}
+// Convert app object -> DB row for insert/update
+function alumnoToRow(a){
+  return {
+    nombre: a.nombre || '', apellido: a.apellido || '', tel: a.tel || '', email: a.email || '',
+    medico: a.medico || '', plan: a.plan || 'Base', tipo: a.tipo || 'Mensual',
+    monto: a.monto != null ? String(a.monto) : '', venc: a.venc || '', fechaplan: a.fechaplan || '',
+    lesion: a.lesion || 0, notasplan: a.notasplan || '', manual: a.manual || '📝 Sin definir',
+    asistencia: a.asistencia || {}, calsynced: a.calSynced || null, caleventids: a.calEventIds || null,
+    ultimopago: a.ultimoPago || '', pagado: a.pagado || false,
+  };
+}
+
+async function load(){
+  try{
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/alumnos?select=*&order=id.asc`, { headers: dbHeaders() });
+    if(!resp.ok) throw new Error('Error de conexión a la base de datos');
+    const rows = await resp.json();
+    alumnos = rows.map(rowToAlumno);
+    nextId = alumnos.length ? Math.max(...alumnos.map(a=>a.id)) + 1 : 1;
+    // local cache as offline fallback
+    try{localStorage.setItem('impulse_alumnos_cache', JSON.stringify(alumnos));}catch(e){}
+  }catch(e){
+    showToast('⚠️ Sin conexión a la base de datos. Mostrando última copia local.', 'error');
+    try{const c=localStorage.getItem('impulse_alumnos_cache'); alumnos = c ? JSON.parse(c) : [];}catch(e2){alumnos=[];}
+  }
+}
+
+async function dbInsert(alumno){
+  const row = alumnoToRow(alumno);
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/alumnos`, {
+    method:'POST', headers: dbHeaders({'Prefer':'return=representation'}), body: JSON.stringify(row)
+  });
+  if(!resp.ok) throw new Error('Error al guardar en la base de datos');
+  const data = await resp.json();
+  return rowToAlumno(data[0]);
+}
+async function dbUpdate(id, alumno){
+  const row = alumnoToRow(alumno);
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/alumnos?id=eq.${id}`, {
+    method:'PATCH', headers: dbHeaders({'Prefer':'return=representation'}), body: JSON.stringify(row)
+  });
+  if(!resp.ok) throw new Error('Error al actualizar en la base de datos');
+  const data = await resp.json();
+  return rowToAlumno(data[0]);
+}
+async function dbDelete(id){
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/alumnos?id=eq.${id}`, { method:'DELETE', headers: dbHeaders() });
+  if(!resp.ok) throw new Error('Error al eliminar en la base de datos');
+}
+function save(){ try{localStorage.setItem('impulse_alumnos_cache', JSON.stringify(alumnos));}catch(e){} }
+
+// ── BACKUP: EXPORT / IMPORT ─────────────────────────────────────────
+function exportData(){
+  const data = JSON.stringify(alumnos, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const fecha = todayStr();
+  a.href = url;
+  a.download = `impulse-sport-backup-${fecha}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('✅ Copia de seguridad descargada', 'success');
+}
+
+function importData(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(!Array.isArray(data)) throw new Error('Formato inválido');
+      if(!confirm(`¿Reemplazar todos los datos actuales con esta copia de seguridad? (${data.length} alumnos). Esto va a borrar y recrear los datos en la base de datos.`)) {
+        event.target.value = '';
+        return;
+      }
+      showToast('Restaurando datos, no cierres la página...', '');
+      // Delete all current rows
+      for(const a of alumnos){ try{ await dbDelete(a.id); }catch(e2){} }
+      // Insert all imported rows
+      const inserted = [];
+      for(const a of data){
+        const { id, ...rest } = a;
+        const saved = await dbInsert(rest);
+        inserted.push(saved);
+      }
+      alumnos = inserted;
+      nextId = alumnos.length ? Math.max(...alumnos.map(a=>a.id)) + 1 : 1;
+      save();
+      renderAlumnos(); renderPagos(); renderAsistencia(); renderPlan();
+      showToast(`✅ Datos restaurados: ${alumnos.length} alumnos`, 'success');
+    } catch(err) {
+      showToast('❌ Error al restaurar. Revisá el archivo o tu conexión.', 'error');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
 
 // ── HELPERS ───────────────────────────────────────────────────────────
 function initials(a){return((a.nombre||'')[0]||(a.nombre||'')[0]||'?').toUpperCase()+((a.apellido||'')[0]||'').toUpperCase();}
@@ -675,26 +817,44 @@ function renderPlan(){
 }
 
 // ── ACTIONS ───────────────────────────────────────────────────────────
-function toggleAsist(id){
+async function toggleAsist(id){
+  const a=alumnos.find(x=>x.id===id);
+  if(!a)return;
   const hoy=todayStr();
-  alumnos=alumnos.map(a=>{
-    if(a.id!==id)return a;
-    const reg={...(a.asistencia||{})};
-    reg[hoy]=!reg[hoy];
-    return{...a,asistencia:reg};
-  });
-  save();renderAsistencia();
+  const reg={...(a.asistencia||{})};
+  reg[hoy]=!reg[hoy];
+  const updated={...a,asistencia:reg};
+  alumnos=alumnos.map(x=>x.id===id?updated:x);
+  renderAsistencia();
+  try{ await dbUpdate(id, updated); save(); }
+  catch(e){ showToast('❌ Error al guardar asistencia. Revisá tu conexión.', 'error'); }
 }
-function marcarTodosPresentes(){
+async function marcarTodosPresentes(){
   const hoy=todayStr();
-  alumnos=alumnos.map(a=>({...a,asistencia:{...(a.asistencia||{}),[hoy]:true}}));
-  save();renderAsistencia();showToast('✅ Todos marcados presentes','success');
+  const updates = alumnos.map(a=>({...a,asistencia:{...(a.asistencia||{}),[hoy]:true}}));
+  alumnos = updates;
+  renderAsistencia();
+  try{
+    await Promise.all(updates.map(a=>dbUpdate(a.id, a)));
+    save();
+    showToast('✅ Todos marcados presentes','success');
+  }catch(e){ showToast('❌ Error al guardar. Revisá tu conexión.', 'error'); }
 }
-function updateManual(id,val){alumnos=alumnos.map(a=>a.id===id?{...a,manual:val}:a);save();}
-function deleteAlumno(id){
+async function updateManual(id,val){
+  alumnos=alumnos.map(a=>a.id===id?{...a,manual:val}:a);
+  const a=alumnos.find(x=>x.id===id);
+  try{ await dbUpdate(id, a); save(); }
+  catch(e){ showToast('❌ Error al guardar. Revisá tu conexión.', 'error'); }
+}
+async function deleteAlumno(id){
   const a=alumnos.find(x=>x.id===id);
   if(!a||!confirm(`¿Eliminar a ${fullName(a)}?`))return;
-  alumnos=alumnos.filter(x=>x.id!==id);save();renderAlumnos();
+  try{
+    await dbDelete(id);
+    alumnos=alumnos.filter(x=>x.id!==id);
+    save();renderAlumnos();
+    showToast('✅ Alumno eliminado','success');
+  }catch(e){ showToast('❌ Error al eliminar. Revisá tu conexión.', 'error'); }
 }
 
 // ── MODAL ALUMNO ──────────────────────────────────────────────────────
@@ -729,7 +889,7 @@ function openModal(type,id=null){
 }
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function handleOvClick(e,id){if(e.target.id===id)closeModal(id);}
-function saveAlumno(){
+async function saveAlumno(){
   const nombre=document.getElementById('f-nombre').value.trim();
   if(!nombre){alert('Ingresá el nombre');return;}
   const obj={
@@ -741,9 +901,27 @@ function saveAlumno(){
     lesion:parseInt(document.getElementById('f-lesion').value),
     notasplan:document.getElementById('f-notasplan').value.trim(),
   };
-  if(editId){alumnos=alumnos.map(a=>a.id===editId?{...a,...obj,calSynced:a.fechaplan!==obj.fechaplan?null:a.calSynced}:a);}
-  else{alumnos.push({id:nextId++,manual:'📝 Sin definir',asistencia:{},...obj});}
-  save();closeModal('overlay-alumno');renderAlumnos();showToast(editId?'✅ Alumno actualizado':'✅ Alumno agregado','success');
+  const btn = document.querySelector('#overlay-alumno .btn-primary');
+  const originalText = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  try{
+    if(editId){
+      const current = alumnos.find(a=>a.id===editId);
+      const merged = {...current,...obj,calSynced: current.fechaplan!==obj.fechaplan?null:current.calSynced};
+      const saved = await dbUpdate(editId, merged);
+      alumnos=alumnos.map(a=>a.id===editId?saved:a);
+    }else{
+      const toInsert = {manual:'📝 Sin definir',asistencia:{},...obj};
+      const saved = await dbInsert(toInsert);
+      alumnos.push(saved);
+      nextId = saved.id + 1;
+    }
+    save();closeModal('overlay-alumno');renderAlumnos();
+    showToast(editId?'✅ Alumno actualizado':'✅ Alumno agregado','success');
+  }catch(e){
+    showToast('❌ Error al guardar. Revisá tu conexión a internet.', 'error');
+  }
+  btn.disabled = false; btn.textContent = originalText;
 }
 
 // ── MODAL PAGO ────────────────────────────────────────────────────────
@@ -758,12 +936,19 @@ function openPagoModal(id){
   document.getElementById('pago-notas').value='';
   document.getElementById('overlay-pago').classList.add('open');
 }
-function savePago(){
+async function savePago(){
   const monto=document.getElementById('pago-monto').value;
   const fecha=document.getElementById('pago-fecha').value;
   const venc=document.getElementById('pago-nuevo-venc').value;
-  alumnos=alumnos.map(a=>a.id===pagoId?{...a,ultimoPago:fecha,pagado:true,monto:monto||a.monto,venc:venc||a.venc}:a);
-  save();closeModal('overlay-pago');renderPagos();showToast('✅ Pago registrado','success');
+  const current = alumnos.find(a=>a.id===pagoId);
+  const updated = {...current,ultimoPago:fecha,pagado:true,monto:monto||current.monto,venc:venc||current.venc};
+  try{
+    const saved = await dbUpdate(pagoId, updated);
+    alumnos=alumnos.map(a=>a.id===pagoId?saved:a);
+    save();closeModal('overlay-pago');renderPagos();showToast('✅ Pago registrado','success');
+  }catch(e){
+    showToast('❌ Error al registrar el pago. Revisá tu conexión.', 'error');
+  }
 }
 
 // ── CALENDAR ──────────────────────────────────────────────────────────
@@ -809,7 +994,9 @@ async function confirmCalEvents(){
     const n=fullName(a);
     const ev1=await createCalEvent(`${emoji} PLANIFICACIÓN — ${n} (vence ${fv.slice(0,6)})`,`Preparar planificación para ${n}. Fecha: ${fmtDateLong(a.fechaplan)}.`,d8,colorId);
     const ev2=await createCalEvent(`${emoji} SAB — ${n} (presentás ${fv.slice(0,6)})`,`⚠️ RECORDATORIO SÁBADO — Planificación nueva para ${n}.`,dSat,colorId);
-    alumnos=alumnos.map(x=>x.id===a.id?{...x,calSynced:a.fechaplan,calEventIds:[ev1.id,ev2.id]}:x);
+    const updated = {...a, calSynced:a.fechaplan, calEventIds:[ev1.id,ev2.id]};
+    const saved = await dbUpdate(a.id, updated);
+    alumnos=alumnos.map(x=>x.id===a.id?saved:x);
     save();closeModal('overlay-cal');
     showToast(hasOld?`✅ Avisos actualizados para ${n}`:`✅ Avisos creados para ${n}`,'success');
     renderPlan();
@@ -831,7 +1018,11 @@ function showToast(msg,type=''){
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){['overlay-alumno','overlay-pago','overlay-cal'].forEach(id=>closeModal(id));}});
 document.getElementById('today-badge').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 document.getElementById('fecha-hoy-asist').textContent=fmtDate(todayStr());
-load();renderAlumnos();initGCal();
+(async function init(){
+  await load();
+  renderAlumnos();
+  initGCal();
+})();
 </script>
 </body>
 </html>
