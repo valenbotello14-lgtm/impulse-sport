@@ -292,7 +292,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 
   <!-- ── PAGOS ── -->
   <section class="section" id="sec-pagos">
-    <div class="stats">
+    <div class="stats stats-6">
+      <div class="stat"><div class="stat-label">Total esperado</div><div class="stat-val sv-blue" id="st-esperado">$0</div></div>
       <div class="stat"><div class="stat-label">Cobrado</div><div class="stat-val sv-green" id="st-cobrado">$0</div></div>
       <div class="stat"><div class="stat-label">Pendiente</div><div class="stat-val sv-red" id="st-pendiente">$0</div></div>
       <div class="stat"><div class="stat-label">Vencidos</div><div class="stat-val sv-red" id="st-vencidos-p">0</div></div>
@@ -777,6 +778,7 @@ function renderPagos(){
     else if(st==='pendiente'){ pendiente+=Number(reg.monto||0); }
   });
   const pct = alumnos.length ? Math.round(aldiaN/alumnos.length*100) : 0;
+  document.getElementById('st-esperado').textContent=fmtMoney(totalEsperadoMes(mes));
   document.getElementById('st-cobrado').textContent=fmtMoney(cobrado);
   document.getElementById('st-pendiente').textContent=fmtMoney(pendiente);
   document.getElementById('st-vencidos-p').textContent=vencidosN;
