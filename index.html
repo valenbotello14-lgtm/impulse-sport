@@ -44,6 +44,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 button{font:inherit;}
 button:focus-visible,[tabindex]:focus-visible,a:focus-visible{outline:2px solid var(--cyan2);outline-offset:2px;border-radius:6px;}
 
+/* PANTALLA DE CARGA — se ve un instante al abrir la página / la app instalada */
+#app-splash{position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .35s ease;}
+#app-splash img{width:min(220px,55vw);height:auto;animation:splash-pulse 1.4s ease-in-out infinite;}
+#app-splash.hide{opacity:0;pointer-events:none;}
+@keyframes splash-pulse{0%,100%{opacity:1;}50%{opacity:.75;}}
+@media (prefers-reduced-motion: reduce){#app-splash img{animation:none;}}
+
 /* HEADER */
 .header{background:linear-gradient(135deg,#0D3070 0%,#1A5EB8 60%,#00AADD 100%);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,0.45);}
 .logo{display:flex;align-items:center;gap:12px;}
@@ -226,6 +233,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 </style>
 </head>
 <body>
+
+<div id="app-splash">
+  <img src="logo.png" alt="Impulse Sport">
+</div>
 
 <header class="header">
   <div class="logo">
@@ -1076,6 +1087,9 @@ document.getElementById('today-badge').textContent=new Date().toLocaleDateString
 (async function init(){
   await Promise.all([load(), loadTarifas()]);
   renderAlumnos();
+  const splash=document.getElementById('app-splash');
+  splash.classList.add('hide');
+  setTimeout(()=>splash.remove(),400);
 })();
 </script>
 </body>
