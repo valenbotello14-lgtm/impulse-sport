@@ -78,6 +78,7 @@ button:focus-visible,[tabindex]:focus-visible,a:focus-visible{outline:2px solid 
 .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:22px;}
 .stats-6{grid-template-columns:repeat(6,1fr);}
 .stats-7{grid-template-columns:repeat(7,1fr);}
+.stats-8{grid-template-columns:repeat(8,1fr);}
 .stat{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);}
 .stat-label{font-size:10.5px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
 .stat-val{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;}
@@ -167,6 +168,17 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 .week-cell-people{font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:700;color:var(--cyan2);font-variant-numeric:tabular-nums;}
 .week-cell-people-label{font-size:9.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;}
 .week-cell-sub{font-size:11px;font-weight:600;margin-top:5px;}
+.month-dow-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;}
+.month-dow-row span{text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);}
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.month-cell{aspect-ratio:1;border-radius:9px;border:1px solid var(--border);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;transition:all .15s;}
+.month-cell:hover{border-color:var(--border2);background:var(--bg3);}
+.month-cell.hoy{border-color:var(--cyan2);}
+.month-cell.vacia{visibility:hidden;cursor:default;}
+.month-cell .mc-num{font-size:10.5px;font-weight:700;color:var(--text2);}
+.month-cell.sin-turnos .mc-num{color:var(--text3);}
+.month-cell .mc-people{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:var(--cyan2);}
+.month-cell .mc-dot{width:6px;height:6px;border-radius:50%;}
 .day-pills{display:flex;gap:6px;overflow-x:auto;}
 .day-pill{flex-shrink:0;height:36px;padding:0 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;}
 .day-pill:hover{border-color:var(--border2);color:var(--text);}
@@ -258,7 +270,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
   .fab{display:flex;}
   .btn-header-white{display:none;}
 }
-@media(max-width:600px){.stats,.stats-6,.stats-7{grid-template-columns:repeat(2,1fr);}.form-row{grid-template-columns:1fr;}}
+@media(max-width:600px){.stats,.stats-6,.stats-7,.stats-8{grid-template-columns:repeat(2,1fr);}.form-row{grid-template-columns:1fr;}}
 @media(max-width:480px){
   .header{padding:0 12px;gap:8px;}
   .logo{gap:8px;}
@@ -323,14 +335,15 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 
   <!-- ── ALUMNOS ── -->
   <section class="section active" id="sec-alumnos">
-    <div class="stats stats-7">
+    <div class="stats stats-8">
       <div class="stat"><div class="stat-label">Total alumnos</div><div class="stat-val sv-blue" id="st-total">0</div></div>
       <div class="stat"><div class="stat-label">🏋️ Fuerza</div><div class="stat-val sv-blue" id="st-fuerza">0</div></div>
       <div class="stat"><div class="stat-label">⚡ Velocidad</div><div class="stat-val sv-yellow" id="st-velocidad">0</div></div>
       <div class="stat"><div class="stat-label">🧠 Inteligencia</div><div class="stat-val" style="color:var(--purple)" id="st-inteligencia">0</div></div>
       <div class="stat"><div class="stat-label">🌟 Rendimiento</div><div class="stat-val sv-green" id="st-rendimiento">0</div></div>
       <div class="stat"><div class="stat-label">Con condición médica</div><div class="stat-val sv-yellow" id="st-medico">0</div></div>
-      <div class="stat"><div class="stat-label">Activos hoy</div><div class="stat-val sv-green" id="st-activos">0</div></div>
+      <div class="stat"><div class="stat-label">Activos</div><div class="stat-val sv-green" id="st-activos">0</div></div>
+      <div class="stat"><div class="stat-label">Bajas</div><div class="stat-val sv-red" id="st-bajas">0</div></div>
     </div>
     <div class="toolbar">
       <div class="search-wrap">
@@ -341,7 +354,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
       <select class="filter-sel" id="filter-estado-a" onchange="renderAlumnos()">
         <option value="">Todos</option>
         <option value="activo">Activo</option>
-        <option value="inactivo">Inactivo</option>
+        <option value="inactivo">Baja</option>
       </select>
     </div>
     <div class="card-list" id="tbody-alumnos"></div>
@@ -414,6 +427,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
         <button class="day-pill" data-dia="Sábado" onclick="cambiarDia('Sábado')">Sáb</button>
         <button class="day-pill" data-dia="Domingo" onclick="cambiarDia('Domingo')">Dom</button>
       </div>
+      <button class="btn" onclick="openMesHorarios()">📅 Ver mes</button>
       <button class="btn btn-primary" onclick="openHorarioModal()">+ Nuevo horario</button>
     </div>
     <div class="card-list" id="tbody-horarios"></div>
@@ -598,6 +612,26 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
   </div>
 </div>
 
+<!-- MODAL VISTA MENSUAL DE HORARIOS -->
+<div class="overlay" id="overlay-mes-horarios" onclick="handleOvClick(event,'overlay-mes-horarios')">
+  <div class="modal" style="max-width:560px">
+    <h3><span>📅</span> Vista por mes</h3>
+    <div class="mes-nav" style="margin-bottom:4px;">
+      <button class="icon-btn" onclick="cambiarMesHorarios(-1)" title="Mes anterior">‹</button>
+      <div class="mes-nav-label" id="mes-horarios-label" style="flex:1;"></div>
+      <button class="icon-btn" onclick="cambiarMesHorarios(1)" title="Mes siguiente">›</button>
+    </div>
+    <p style="font-size:11.5px;color:var(--text3);margin:6px 0 14px;">Los horarios son fijos por día de semana, así que cada semana del mes repite el mismo patrón. Tocá un día para ir a su detalle.</p>
+    <div class="month-dow-row">
+      <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+    </div>
+    <div class="month-grid" id="month-grid"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('overlay-mes-horarios')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL GASTO -->
 <div class="overlay" id="overlay-gasto" onclick="handleOvClick(event,'overlay-gasto')">
   <div class="modal">
@@ -750,6 +784,9 @@ function rowToAlumno(r){
     ultimoPago: r.ultimopago || '',
     pagado: r.pagado || false,
     pagosmensuales: r.pagosmensuales || {},
+    baja: r.baja || false,
+    fechaBaja: r.fecha_baja || '',
+    motivoBaja: r.motivo_baja || '',
   };
 }
 // Convert app object -> DB row for insert/update
@@ -762,6 +799,7 @@ function alumnoToRow(a){
     asistencia: a.asistencia || {}, calsynced: a.calSynced || null, caleventids: a.calEventIds || null,
     ultimopago: a.ultimoPago || '', pagado: a.pagado || false,
     pagosmensuales: a.pagosmensuales || {},
+    baja: a.baja || false, fecha_baja: a.fechaBaja || '', motivo_baja: a.motivoBaja || '',
   };
 }
 
@@ -1042,8 +1080,8 @@ function renderAlumnos(){
   let list=alumnos.filter(a=>{
     if(q&&!fullName(a).toLowerCase().includes(q))return false;
     if(fp&&a.plan!==fp)return false;
-    if(fe==='activo'&&getPagoStatus(a).key==='vencido')return false;
-    if(fe==='inactivo'&&getPagoStatus(a).key!=='vencido')return false;
+    if(fe==='activo'&&a.baja)return false;
+    if(fe==='inactivo'&&!a.baja)return false;
     return true;
   });
   document.getElementById('st-total').textContent=alumnos.length;
@@ -1052,13 +1090,14 @@ function renderAlumnos(){
   document.getElementById('st-inteligencia').textContent=alumnos.filter(a=>planArea(a.plan)==='Inteligencia de Juego').length;
   document.getElementById('st-rendimiento').textContent=alumnos.filter(a=>planArea(a.plan)==='Planes de Rendimiento').length;
   document.getElementById('st-medico').textContent=alumnos.filter(a=>a.medico&&a.medico.trim()&&a.medico.toLowerCase()!=='ninguna'&&a.medico.toLowerCase()!=='no').length;
-  document.getElementById('st-activos').textContent=alumnos.filter(a=>getPagoStatus(a).key!=='vencido').length;
+  document.getElementById('st-activos').textContent=alumnos.filter(a=>!a.baja).length;
+  document.getElementById('st-bajas').textContent=alumnos.filter(a=>a.baja).length;
   const tb=document.getElementById('tbody-alumnos');
   if(!list.length){tb.innerHTML=`<div class="empty"><div class="empty-icon">🏋️</div>No hay alumnos</div>`;return;}
   tb.innerHTML=list.map(a=>{
     const ps=getPagoStatus(a);
     const tieneMedico = a.medico && a.medico.trim() && a.medico.toLowerCase()!=='ninguna' && a.medico.toLowerCase()!=='no';
-    return`<div class="a-card">
+    return`<div class="a-card"${a.baja?' style="opacity:.6;"':''}>
       <div class="a-card-top" onclick="toggleCard(this)">
         <div class="avatar av${avColor(a)}">${initials(a)}</div>
         <div class="a-card-info">
@@ -1066,7 +1105,7 @@ function renderAlumnos(){
           ${a.email?`<div class="a-card-email">${a.email}</div>`:''}
           <div class="a-card-badges">
             <span class="badge ${areaBadgeClass(planArea(a.plan))}">${a.plan||'Sin plan'}</span>
-            <span class="badge ${ps.cls}">${ps.label}</span>
+            ${a.baja?'<span class="badge b-red">⛔ Baja</span>':`<span class="badge ${ps.cls}">${ps.label}</span>`}
           </div>
         </div>
         <div class="a-card-quick" onclick="event.stopPropagation()">
@@ -1077,13 +1116,41 @@ function renderAlumnos(){
       <div class="a-card-detail"><div class="a-card-detail-inner">
         <div><label>Teléfono</label>${a.tel||'—'}</div>
         <div><label>Condición médica</label><span style="color:${tieneMedico?'var(--yellow)':'var(--text3)'}">${a.medico||'—'}</span></div>
+        ${a.baja?`<div><label>Baja desde</label>${a.fechaBaja?fmtDate(a.fechaBaja):'—'}${a.motivoBaja?` · ${a.motivoBaja}`:''}</div>`:''}
         <div class="a-card-detail-actions">
           <button class="btn" onclick="openModal('alumno',${a.id})">✎ Editar</button>
+          ${a.baja
+            ? `<button class="btn btn-green" onclick="toggleBaja(${a.id})">↺ Reactivar</button>`
+            : `<button class="btn" onclick="toggleBaja(${a.id})">⛔ Dar de baja</button>`}
           <button class="btn btn-danger" onclick="deleteAlumno(${a.id})">Eliminar</button>
         </div>
       </div></div>
     </div>`;
   }).join('');
+}
+
+async function toggleBaja(id){
+  const a=alumnos.find(x=>x.id===id); if(!a)return;
+  if(a.baja){
+    if(!confirm(`¿Reactivar a ${fullName(a)}?`))return;
+    const updated={...a, baja:false, fechaBaja:'', motivoBaja:''};
+    try{
+      const saved=await dbUpdate(id, updated);
+      alumnos=alumnos.map(x=>x.id===id?saved:x);
+      save();renderAlumnos();
+      showToast('✅ Alumno reactivado','success');
+    }catch(e){ showToast('❌ Error al actualizar. Revisá tu conexión.', 'error'); }
+  }else{
+    if(!confirm(`¿Dar de baja a ${fullName(a)}?`))return;
+    const motivo=(prompt('Motivo (opcional):')||'').trim();
+    const updated={...a, baja:true, fechaBaja:todayStr(), motivoBaja:motivo};
+    try{
+      const saved=await dbUpdate(id, updated);
+      alumnos=alumnos.map(x=>x.id===id?saved:x);
+      save();renderAlumnos();
+      showToast('Alumno dado de baja','');
+    }catch(e){ showToast('❌ Error al actualizar. Revisá tu conexión.', 'error'); }
+  }
 }
 
 // ── RENDER PAGOS (mes a mes) ──────────────────────────────────────────
@@ -1098,19 +1165,21 @@ function renderPagos(){
   const q=(document.getElementById('search-pagos').value||'').toLowerCase();
   const fp=document.getElementById('filter-pago').value;
   let list=alumnos.filter(a=>{
+    if(a.baja)return false;
     if(q&&!fullName(a).toLowerCase().includes(q))return false;
     if(fp&&getEstadoPagoMes(a,mes).key!==fp)return false;
     return true;
   });
   list.sort((a,b)=>fullName(a).localeCompare(fullName(b)));
   let cobrado=0, pendiente=0, vencidosN=0, aldiaN=0;
+  const activos = alumnos.filter(a=>!a.baja);
   alumnos.forEach(a=>{
     const reg=getPagoMes(a,mes), st=getEstadoPagoMes(a,mes).key;
-    if(st==='pagado'){ cobrado+=Number(reg.monto||0); aldiaN++; }
-    else if(st==='vencido'){ pendiente+=Number(reg.monto||0); vencidosN++; }
-    else if(st==='pendiente'){ pendiente+=Number(reg.monto||0); }
+    if(st==='pagado'){ cobrado+=Number(reg.monto||0); if(!a.baja) aldiaN++; } // lo ya cobrado cuenta aunque haya pasado a baja después
+    else if(!a.baja && st==='vencido'){ pendiente+=Number(reg.monto||0); vencidosN++; }
+    else if(!a.baja && st==='pendiente'){ pendiente+=Number(reg.monto||0); }
   });
-  const pct = alumnos.length ? Math.round(aldiaN/alumnos.length*100) : 0;
+  const pct = activos.length ? Math.round(aldiaN/activos.length*100) : 0;
   document.getElementById('st-esperado').textContent=fmtMoney(totalEsperadoMes(mes));
   document.getElementById('st-cobrado').textContent=fmtMoney(cobrado);
   document.getElementById('st-pendiente').textContent=fmtMoney(pendiente);
@@ -1426,25 +1495,62 @@ function diaDeHoy(){ return DIAS[(new Date().getDay()+6)%7]; } // getDay(): 0=do
 let diaActual = diaDeHoy();
 function cambiarDia(d){ diaActual=d; renderHorarios(); }
 
+// Estadísticas de un día (anotados, cupos libres) — usadas por la grilla semanal y por el calendario mensual.
+function statsParaDia(d){
+  const turnosDia = horarios.filter(h=>h.dia===d);
+  const anotados = turnosDia.reduce((s,h)=>s+((h.inscriptos||[]).length),0);
+  const conCupo = turnosDia.filter(h=>h.cupo!=null);
+  const libres = conCupo.reduce((s,h)=>s+Math.max(0,h.cupo-(h.inscriptos||[]).length),0);
+  const hayLibre = turnosDia.some(h=>h.cupo==null) || libres>0;
+  let sub, subCls;
+  if(!turnosDia.length){ sub='Sin turnos'; subCls='sv-gray'; }
+  else if(!conCupo.length){ sub='Sin límite'; subCls='sv-blue'; }
+  else{ sub=`${libres} libre${libres===1?'':'s'}`; subCls = hayLibre ? 'sv-green' : 'sv-red'; }
+  return{turnosDia, anotados, conCupo, libres, hayLibre, sub, subCls};
+}
+
 // Resumen semanal: por día, cuánta gente anotada y cuántos cupos libres quedan (clic = ir a ese día).
 function renderWeekGrid(){
   document.getElementById('week-grid').innerHTML = DIAS.map(d=>{
-    const turnosDia = horarios.filter(h=>h.dia===d);
-    const anotados = turnosDia.reduce((s,h)=>s+((h.inscriptos||[]).length),0);
-    const conCupo = turnosDia.filter(h=>h.cupo!=null);
-    const libres = conCupo.reduce((s,h)=>s+Math.max(0,h.cupo-(h.inscriptos||[]).length),0);
-    const hayLibre = turnosDia.some(h=>h.cupo==null) || libres>0;
-    let sub, subCls;
-    if(!turnosDia.length){ sub='Sin turnos'; subCls='sv-gray'; }
-    else if(!conCupo.length){ sub='Sin límite'; subCls='sv-blue'; }
-    else{ sub=`${libres} libre${libres===1?'':'s'}`; subCls = hayLibre ? 'sv-green' : 'sv-red'; }
+    const st=statsParaDia(d);
     return`<div class="week-cell${d===diaActual?' active':''}" onclick="cambiarDia('${d}')">
       <div class="week-cell-day">${d.slice(0,3)}</div>
-      <div class="week-cell-people">${anotados}</div>
+      <div class="week-cell-people">${st.anotados}</div>
       <div class="week-cell-people-label">anotados</div>
-      <div class="week-cell-sub ${subCls}">${sub}</div>
+      <div class="week-cell-sub ${st.subCls}">${st.sub}</div>
     </div>`;
   }).join('');
+}
+
+// Vista por mes: mismo patrón semanal repetido día por día del mes (los horarios son fijos por día de semana).
+let mesHorariosActual = mesActualKey();
+function openMesHorarios(){
+  mesHorariosActual = mesActualKey();
+  renderMesHorarios();
+  document.getElementById('overlay-mes-horarios').classList.add('open');
+}
+function cambiarMesHorarios(delta){ mesHorariosActual = addMonthKey(mesHorariosActual, delta); renderMesHorarios(); }
+function renderMesHorarios(){
+  const mes = mesHorariosActual;
+  document.getElementById('mes-horarios-label').textContent = mesLabel(mes).replace(/^./,c=>c.toUpperCase());
+  const [y,m] = mes.split('-').map(Number);
+  const primerDia = new Date(y, m-1, 1);
+  const diasEnMes = new Date(y, m, 0).getDate();
+  const offset = (primerDia.getDay()+6)%7; // lunes=0
+  const hoy = todayStr();
+  let cells = '';
+  for(let i=0;i<offset;i++) cells += `<div class="month-cell vacia"></div>`;
+  for(let dia=1; dia<=diasEnMes; dia++){
+    const fecha = `${y}-${String(m).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+    const nombreDia = DIAS[(offset+dia-1)%7];
+    const st = statsParaDia(nombreDia);
+    const dotColor = !st.turnosDia.length ? 'var(--text3)' : (!st.conCupo.length ? 'var(--cyan2)' : (st.hayLibre ? 'var(--green)' : 'var(--red)'));
+    cells += `<div class="month-cell${!st.turnosDia.length?' sin-turnos':''}${fecha===hoy?' hoy':''}" onclick="cambiarDia('${nombreDia}');closeModal('overlay-mes-horarios')" title="${nombreDia}">
+      <div class="mc-num">${dia}</div>
+      ${st.turnosDia.length?`<div class="mc-people">${st.anotados}</div><div class="mc-dot" style="background:${dotColor}"></div>`:''}
+    </div>`;
+  }
+  document.getElementById('month-grid').innerHTML = cells;
 }
 
 function renderHorarios(){
@@ -1567,7 +1673,7 @@ async function quitarInscripto(hId, alumnoId){
 
 // ── ESTADÍSTICAS DE INGRESOS ─────────────────────────────────────────────
 function totalEsperadoMes(mes){
-  return alumnos.reduce((s,a)=>{ const t=getTarifa(a.plan,mes); return s+(t!=null?t:Number(a.monto||0)); },0);
+  return alumnos.filter(a=>!a.baja).reduce((s,a)=>{ const t=getTarifa(a.plan,mes); return s+(t!=null?t:Number(a.monto||0)); },0);
 }
 function totalCobradoMes(mes){
   return alumnos.reduce((s,a)=>{ const reg=getPagoMes(a,mes); return s+(reg.pagado?Number(reg.monto||0):0); },0);
@@ -1743,7 +1849,7 @@ function showToast(msg,type=''){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){['overlay-alumno','overlay-pago','overlay-tarifas','overlay-plan','overlay-historial','overlay-horario','overlay-gasto'].forEach(id=>closeModal(id));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){['overlay-alumno','overlay-pago','overlay-tarifas','overlay-plan','overlay-historial','overlay-horario','overlay-gasto','overlay-mes-horarios'].forEach(id=>closeModal(id));}});
 document.getElementById('today-badge').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 (async function init(){
   await Promise.all([load(), loadTarifas(), loadHorarios(), loadPlanes(), loadGastos()]);
