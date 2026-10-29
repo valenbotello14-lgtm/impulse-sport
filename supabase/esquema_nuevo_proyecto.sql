@@ -1,8 +1,8 @@
 -- Impulse Sport — esquema completo para un proyecto Supabase NUEVO
 -- Ejecutar UNA SOLA VEZ en el SQL Editor del proyecto nuevo (Project → SQL Editor → New query)
--- Crea las tres tablas que usa la app ("alumnos", "tarifas" y "horarios") con las
--- mismas columnas y el mismo tipo de policy (acceso total con la clave "anon") que
--- el proyecto viejo.
+-- Crea las cinco tablas que usa la app ("alumnos", "tarifas", "horarios", "planes"
+-- y "gastos") con las mismas columnas y el mismo tipo de policy (acceso total con
+-- la clave "anon") que el proyecto viejo.
 
 create table if not exists alumnos (
   id bigint generated always as identity primary key,
@@ -46,9 +46,31 @@ create table if not exists horarios (
   created_at timestamptz not null default now()
 );
 
+create table if not exists planes (
+  id bigint generated always as identity primary key,
+  area text not null,
+  nombre text not null,
+  detalle text not null default '',
+  monto numeric not null default 0,
+  activo boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists gastos (
+  id bigint generated always as identity primary key,
+  concepto text not null default '',
+  categoria text not null default 'Otro',
+  monto numeric not null default 0,
+  mes text not null,          -- 'YYYY-MM'
+  notas text not null default '',
+  created_at timestamptz not null default now()
+);
+
 alter table alumnos enable row level security;
 alter table tarifas enable row level security;
 alter table horarios enable row level security;
+alter table planes enable row level security;
+alter table gastos enable row level security;
 
 -- La app usa la clave "anon" para leer/escribir todo (no hay login de usuarios).
 create policy "alumnos_anon_all" on alumnos
@@ -68,3 +90,30 @@ create policy "horarios_anon_all" on horarios
   to public
   using (true)
   with check (true);
+
+create policy "planes_anon_all" on planes
+  for all
+  to public
+  using (true)
+  with check (true);
+
+create policy "gastos_anon_all" on gastos
+  for all
+  to public
+  using (true)
+  with check (true);
+
+-- Carga los 12 planes de ejemplo para no arrancar con el catálogo vacío.
+insert into planes (area, nombre, detalle, monto) values
+  ('Fuerza', 'Fuerza Base', '2 sesiones semanales', 32000),
+  ('Fuerza', 'Fuerza Premium', '3 o más sesiones semanales', 38000),
+  ('Velocidad', 'Velocidad Base', '1 sesión semanal', 35000),
+  ('Velocidad', 'Velocidad Premium', '2 sesiones semanales', 62000),
+  ('Inteligencia de Juego', 'Grupal', '4 a 6 jugadores', 40000),
+  ('Inteligencia de Juego', 'Dúo', '2 jugadores', 45000),
+  ('Inteligencia de Juego', 'Dúo Plus', '2/3 jugadores · 2 sesiones semanales', 52000),
+  ('Planes de Rendimiento', 'Plan Formación', '1 sesión de Fuerza + 1 de Inteligencia de Juego', 55000),
+  ('Planes de Rendimiento', 'Plan Potencia', 'Fuerza Premium + Velocidad Base', 58000),
+  ('Planes de Rendimiento', 'Plan Estrategia', 'Fuerza Premium + Inteligencia de Juego', 60000),
+  ('Planes de Rendimiento', 'Plan Juego Rápido', 'Velocidad Base + Inteligencia de Juego', 62000),
+  ('Planes de Rendimiento', 'Plan Integral', 'Fuerza Premium + Velocidad Base + Inteligencia de Juego', 65000);

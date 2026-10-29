@@ -150,6 +150,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 .p-card-date{font-size:11.5px;color:var(--text3);}
 .p-card-actions{display:flex;gap:6px;margin-left:auto;}
 
+/* BALANCE — tarjetas de gasto */
+.g-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px;display:flex;align-items:center;gap:12px;}
+.g-card-info{flex:1;min-width:0;}
+.g-card-concepto{font-weight:600;font-size:13.5px;}
+.g-card-sub{font-size:11.5px;color:var(--text3);margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.g-card-monto{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--red);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.g-card-actions{display:flex;gap:6px;flex-shrink:0;}
+
 /* HORARIOS — grilla por día */
 .week-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px;margin-bottom:16px;}
 .week-cell{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;transition:all .15s;}
@@ -305,6 +313,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     Horarios
   </div>
+  <div class="tab" onclick="showTab('balance')" id="tab-balance">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+    Balance
+  </div>
 </nav>
 
 <main class="main">
@@ -407,6 +419,36 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
     <div class="card-list" id="tbody-horarios"></div>
   </section>
 
+  <!-- ── BALANCE ── -->
+  <section class="section" id="sec-balance">
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Ingresos</div><div class="stat-val sv-green" id="bal-ingresos">$0</div></div>
+      <div class="stat"><div class="stat-label">Gastos</div><div class="stat-val sv-red" id="bal-gastos">$0</div></div>
+      <div class="stat"><div class="stat-label">Balance</div><div class="stat-val sv-green" id="bal-neto">$0</div></div>
+    </div>
+    <div class="stats-panel" id="balance-stats-panel">
+      <div class="kpi-row">
+        <div><div class="stat-label">Ingresos (12 meses)</div><div class="stat-val sv-green" id="bal-kpi-ingresos" style="font-size:22px;">—</div></div>
+        <div><div class="stat-label">Gastos (12 meses)</div><div class="stat-val sv-red" id="bal-kpi-gastos" style="font-size:22px;">—</div></div>
+        <div><div class="stat-label">Balance acumulado</div><div class="stat-val" id="bal-kpi-neto" style="font-size:22px;">—</div></div>
+      </div>
+      <div class="chart-bars" id="balance-chart"></div>
+      <div class="kpi-detail" style="margin-top:8px;">Balance mensual (ingresos cobrados − gastos cargados), últimos 12 meses.</div>
+    </div>
+    <div class="toolbar">
+      <div class="mes-nav">
+        <button class="icon-btn" onclick="cambiarMesBalance(-1)" title="Mes anterior">‹</button>
+        <div class="mes-nav-label" id="balance-mes-label"></div>
+        <button class="icon-btn" onclick="cambiarMesBalance(1)" title="Mes siguiente">›</button>
+      </div>
+      <button class="btn" id="btn-mes-actual-balance" onclick="irMesActualBalance()" style="display:none;">Hoy</button>
+      <div style="flex:1;"></div>
+      <button class="btn" onclick="toggleBalanceStatsPanel()"><span id="balance-stats-toggle-label">📊 Ver estadísticas</span></button>
+      <button class="btn btn-primary" onclick="openGastoModal()">+ Nuevo gasto</button>
+    </div>
+    <div class="card-list" id="tbody-gastos"></div>
+  </section>
+
 </main>
 
 <!-- NAV INFERIOR (celular) -->
@@ -423,6 +465,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
     <button class="bn-item" data-tab="horarios" onclick="showTab('horarios')">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       Horarios
+    </button>
+    <button class="bn-item" data-tab="balance" onclick="showTab('balance')">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+      Balance
     </button>
   </div>
 </nav>
@@ -478,8 +524,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 
 <!-- MODAL TARIFAS -->
 <div class="overlay" id="overlay-tarifas" onclick="handleOvClick(event,'overlay-tarifas')">
-  <div class="modal" style="max-width:520px">
-    <h3><span>💲</span> Tarifas de planes</h3>
+  <div class="modal" style="max-width:560px">
+    <h3><span>💲</span> Planes y tarifas</h3>
+
+    <div class="section-divider">Catálogo de planes</div>
+    <div id="planes-catalogo-list"></div>
+    <button class="btn" style="width:100%;margin:4px 0 20px;" onclick="openPlanModal()">+ Nuevo plan</button>
+
+    <div class="section-divider">Actualizar precio</div>
     <p style="font-size:12px;color:var(--text2);margin-bottom:16px;">Cargá un aumento y desde qué mes rige. Los meses anteriores no se modifican.</p>
     <div class="form-row">
       <div class="form-group"><label>Plan</label>
@@ -493,6 +545,28 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
     <div id="tarifas-list"></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('overlay-tarifas')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PLAN -->
+<div class="overlay" id="overlay-plan" onclick="handleOvClick(event,'overlay-plan')">
+  <div class="modal">
+    <h3><span>🏷️</span> <span id="modal-plan-title">Nuevo plan</span></h3>
+    <div class="form-group"><label>Área</label>
+      <select id="p-area">
+        <option value="Fuerza">🏋️ Fuerza</option>
+        <option value="Velocidad">⚡ Velocidad</option>
+        <option value="Inteligencia de Juego">🧠 Inteligencia de Juego</option>
+        <option value="Planes de Rendimiento">🌟 Planes de Rendimiento</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Nombre del plan</label><input type="text" id="p-nombre" placeholder="Ej: Fuerza Base"></div>
+    <div class="form-group"><label>Detalle</label><input type="text" id="p-detalle" placeholder="Ej: 2 sesiones semanales"></div>
+    <div class="form-group"><label>Monto mensual ($)</label><input type="number" id="p-monto" placeholder="0"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('overlay-plan')">Cancelar</button>
+      <button class="btn btn-primary" onclick="savePlan()">Guardar</button>
     </div>
   </div>
 </div>
@@ -520,6 +594,34 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('overlay-horario')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveHorario()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL GASTO -->
+<div class="overlay" id="overlay-gasto" onclick="handleOvClick(event,'overlay-gasto')">
+  <div class="modal">
+    <h3><span>💸</span> <span id="modal-gasto-title">Nuevo gasto</span></h3>
+    <div class="form-group"><label>Concepto</label><input type="text" id="g-concepto" placeholder="Ej: Alquiler, sueldo profe..."></div>
+    <div class="form-row">
+      <div class="form-group"><label>Categoría</label>
+        <select id="g-categoria">
+          <option>Alquiler</option>
+          <option>Sueldos</option>
+          <option>Equipamiento</option>
+          <option>Servicios</option>
+          <option>Mantenimiento</option>
+          <option>Marketing</option>
+          <option>Otro</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Monto ($)</label><input type="number" id="g-monto" placeholder="0"></div>
+    </div>
+    <div class="form-group"><label>Mes</label><input type="month" id="g-mes"></div>
+    <div class="form-group"><label>Notas</label><textarea id="g-notas" placeholder="Opcional..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('overlay-gasto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveGasto()">Guardar</button>
     </div>
   </div>
 </div>
@@ -562,35 +664,58 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 let alumnos=[], nextId=1;
 
-// ── CATÁLOGO DE PLANES ───────────────────────────────────────────────
+// ── CATÁLOGO DE PLANES (editable, vive en Supabase) ──────────────────
 const AREAS = ['Fuerza','Velocidad','Inteligencia de Juego','Planes de Rendimiento'];
 const AREA_ICON = {'Fuerza':'🏋️','Velocidad':'⚡','Inteligencia de Juego':'🧠','Planes de Rendimiento':'🌟'};
 const AREA_BADGE = {'Fuerza':'b-blue','Velocidad':'b-yellow','Inteligencia de Juego':'b-purple','Planes de Rendimiento':'b-green'};
-const PLANES = [
-  {area:'Fuerza', nombre:'Fuerza Base', detalle:'2 sesiones semanales', monto:32000},
-  {area:'Fuerza', nombre:'Fuerza Premium', detalle:'3 o más sesiones semanales', monto:38000},
-  {area:'Velocidad', nombre:'Velocidad Base', detalle:'1 sesión semanal', monto:35000},
-  {area:'Velocidad', nombre:'Velocidad Premium', detalle:'2 sesiones semanales', monto:62000},
-  {area:'Inteligencia de Juego', nombre:'Grupal', detalle:'4 a 6 jugadores', monto:40000},
-  {area:'Inteligencia de Juego', nombre:'Dúo', detalle:'2 jugadores', monto:45000},
-  {area:'Inteligencia de Juego', nombre:'Dúo Plus', detalle:'2/3 jugadores · 2 sesiones semanales', monto:52000},
-  {area:'Planes de Rendimiento', nombre:'Plan Formación', detalle:'1 sesión de Fuerza + 1 de Inteligencia de Juego', monto:55000},
-  {area:'Planes de Rendimiento', nombre:'Plan Potencia', detalle:'Fuerza Premium + Velocidad Base', monto:58000},
-  {area:'Planes de Rendimiento', nombre:'Plan Estrategia', detalle:'Fuerza Premium + Inteligencia de Juego', monto:60000},
-  {area:'Planes de Rendimiento', nombre:'Plan Juego Rápido', detalle:'Velocidad Base + Inteligencia de Juego', monto:62000},
-  {area:'Planes de Rendimiento', nombre:'Plan Integral', detalle:'Fuerza Premium + Velocidad Base + Inteligencia de Juego', monto:65000},
-];
-function planArea(nombre){ const p=PLANES.find(x=>x.nombre===nombre); return p?p.area:''; }
-function planMontoDefault(nombre){ const p=PLANES.find(x=>x.nombre===nombre); return p?p.monto:0; }
+let planes=[];
+async function loadPlanes(){
+  try{
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/planes?select=*&order=id.asc`, { headers: dbHeaders() });
+    if(!resp.ok) throw new Error('Error de conexión a la base de datos');
+    planes = await resp.json();
+    try{localStorage.setItem('impulse_planes_cache', JSON.stringify(planes));}catch(e){}
+  }catch(e){
+    try{const c=localStorage.getItem('impulse_planes_cache'); planes = c ? JSON.parse(c) : [];}catch(e2){planes=[];}
+  }
+}
+async function dbInsertPlan(p){
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/planes`, {
+    method:'POST', headers: dbHeaders({'Prefer':'return=representation'}), body: JSON.stringify(p)
+  });
+  if(!resp.ok) throw new Error('Error al guardar el plan');
+  const data = await resp.json();
+  return data[0];
+}
+async function dbUpdatePlan(id, patch){
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/planes?id=eq.${id}`, {
+    method:'PATCH', headers: dbHeaders({'Prefer':'return=representation'}), body: JSON.stringify(patch)
+  });
+  if(!resp.ok) throw new Error('Error al actualizar el plan');
+  const data = await resp.json();
+  return data[0];
+}
+async function dbDeletePlan(id){
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/planes?id=eq.${id}`, { method:'DELETE', headers: dbHeaders() });
+  if(!resp.ok) throw new Error('Error al eliminar el plan');
+}
+function planArea(nombre){ const p=planes.find(x=>x.nombre===nombre); return p?p.area:''; }
+function planMontoDefault(nombre){ const p=planes.find(x=>x.nombre===nombre); return p?p.monto:0; }
 function areaBadgeClass(area){ return AREA_BADGE[area] || 'b-gray'; }
+function primerPlanActivo(){ return planes.find(p=>p.activo!==false) || null; }
 function renderPlanOptions(){
-  const grupos = AREAS.map(area=>{
-    const opts = PLANES.filter(p=>p.area===area).map(p=>`<option value="${p.nombre}">${p.nombre} — ${p.detalle}</option>`).join('');
-    return `<optgroup label="${AREA_ICON[area]} ${area}">${opts}</optgroup>`;
-  }).join('');
-  document.getElementById('f-plan').innerHTML = grupos;
-  document.getElementById('tar-plan').innerHTML = grupos;
-  document.getElementById('filter-plan').innerHTML = '<option value="">Todos los planes</option>' + grupos;
+  const activos = planes.filter(p=>p.activo!==false);
+  function grupos(list, marcarInactivos){
+    return AREAS.map(area=>{
+      const items = list.filter(p=>p.area===area);
+      if(!items.length) return '';
+      const opts = items.map(p=>`<option value="${p.nombre}">${p.nombre} — ${p.detalle}${marcarInactivos&&p.activo===false?' (inactivo)':''}</option>`).join('');
+      return `<optgroup label="${AREA_ICON[area]} ${area}">${opts}</optgroup>`;
+    }).join('');
+  }
+  document.getElementById('f-plan').innerHTML = grupos(activos,false);
+  document.getElementById('tar-plan').innerHTML = grupos(activos,false);
+  document.getElementById('filter-plan').innerHTML = '<option value="">Todos los planes</option>' + grupos(planes,true);
 }
 
 function dbHeaders(extra={}){
@@ -746,9 +871,42 @@ async function dbDeleteHorario(id){
   if(!resp.ok) throw new Error('Error al eliminar el horario');
 }
 
+// ── DATA (SUPABASE) — GASTOS (Balance) ───────────────────────────────
+let gastos=[];
+async function loadGastos(){
+  try{
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/gastos?select=*&order=mes.desc`, { headers: dbHeaders() });
+    if(!resp.ok) throw new Error('Error de conexión a la base de datos');
+    gastos = await resp.json();
+    try{localStorage.setItem('impulse_gastos_cache', JSON.stringify(gastos));}catch(e){}
+  }catch(e){
+    try{const c=localStorage.getItem('impulse_gastos_cache'); gastos = c ? JSON.parse(c) : [];}catch(e2){gastos=[];}
+  }
+}
+async function dbInsertGasto(g){
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/gastos`, {
+    method:'POST', headers: dbHeaders({'Prefer':'return=representation'}), body: JSON.stringify(g)
+  });
+  if(!resp.ok) throw new Error('Error al guardar el gasto');
+  const data = await resp.json();
+  return data[0];
+}
+async function dbUpdateGasto(id, patch){
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/gastos?id=eq.${id}`, {
+    method:'PATCH', headers: dbHeaders({'Prefer':'return=representation'}), body: JSON.stringify(patch)
+  });
+  if(!resp.ok) throw new Error('Error al actualizar el gasto');
+  const data = await resp.json();
+  return data[0];
+}
+async function dbDeleteGasto(id){
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/gastos?id=eq.${id}`, { method:'DELETE', headers: dbHeaders() });
+  if(!resp.ok) throw new Error('Error al eliminar el gasto');
+}
+
 // ── BACKUP: EXPORT / IMPORT ─────────────────────────────────────────
 function exportData(){
-  const data = JSON.stringify({alumnos, tarifas, horarios}, null, 2);
+  const data = JSON.stringify({alumnos, tarifas, horarios, planes, gastos}, null, 2);
   const blob = new Blob([data], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -773,8 +931,10 @@ function importData(event){
       const data = Array.isArray(raw) ? raw : raw.alumnos;
       const tarifasData = Array.isArray(raw) ? [] : (raw.tarifas || []);
       const horariosData = Array.isArray(raw) ? [] : (raw.horarios || []);
+      const planesData = Array.isArray(raw) ? [] : (raw.planes || []);
+      const gastosData = Array.isArray(raw) ? [] : (raw.gastos || []);
       if(!Array.isArray(data)) throw new Error('Formato inválido');
-      if(!confirm(`¿Reemplazar todos los datos actuales con esta copia de seguridad? (${data.length} alumnos, ${tarifasData.length} tarifas, ${horariosData.length} horarios). Esto va a borrar y recrear los datos en la base de datos.`)) {
+      if(!confirm(`¿Reemplazar todos los datos actuales con esta copia de seguridad? (${data.length} alumnos, ${tarifasData.length} tarifas, ${horariosData.length} horarios, ${planesData.length} planes, ${gastosData.length} gastos). Esto va a borrar y recrear los datos en la base de datos.`)) {
         event.target.value = '';
         return;
       }
@@ -783,6 +943,8 @@ function importData(event){
       for(const a of alumnos){ try{ await dbDelete(a.id); }catch(e2){} }
       for(const t of tarifas){ try{ await dbDeleteTarifa(t.id); }catch(e2){} }
       for(const h of horarios){ try{ await dbDeleteHorario(h.id); }catch(e2){} }
+      for(const p of planes){ try{ await dbDeletePlan(p.id); }catch(e2){} }
+      for(const g of gastos){ try{ await dbDeleteGasto(g.id); }catch(e2){} }
       // Insert all imported rows
       const inserted = [];
       for(const a of data){
@@ -802,13 +964,28 @@ function importData(event){
         const saved = await dbInsertHorario(rest);
         insertedHorarios.push(saved);
       }
+      const insertedPlanes = [];
+      for(const p of planesData){
+        const { id, ...rest } = p;
+        const saved = await dbInsertPlan(rest);
+        insertedPlanes.push(saved);
+      }
+      const insertedGastos = [];
+      for(const g of gastosData){
+        const { id, ...rest } = g;
+        const saved = await dbInsertGasto(rest);
+        insertedGastos.push(saved);
+      }
       alumnos = inserted;
       tarifas = insertedTarifas;
       horarios = insertedHorarios;
+      planes = insertedPlanes;
+      gastos = insertedGastos;
       nextId = alumnos.length ? Math.max(...alumnos.map(a=>a.id)) + 1 : 1;
       save();
-      renderAlumnos(); renderPagos(); renderHorarios();
-      showToast(`✅ Datos restaurados: ${alumnos.length} alumnos, ${tarifas.length} tarifas, ${horarios.length} horarios`, 'success');
+      renderPlanOptions();
+      renderAlumnos(); renderPagos(); renderHorarios(); renderBalance();
+      showToast(`✅ Datos restaurados: ${alumnos.length} alumnos, ${tarifas.length} tarifas, ${horarios.length} horarios, ${planes.length} planes, ${gastos.length} gastos`, 'success');
     } catch(err) {
       showToast('❌ Error al restaurar. Revisá el archivo o tu conexión.', 'error');
     }
@@ -843,7 +1020,7 @@ function getPagoStatus(a){ return getEstadoPagoMes(a, mesActualKey()); }
 
 // ── TABS ──────────────────────────────────────────────────────────────
 function showTab(t){
-  ['alumnos','pagos','horarios'].forEach(s=>{
+  ['alumnos','pagos','horarios','balance'].forEach(s=>{
     document.getElementById('sec-'+s).classList.toggle('active',s===t);
     document.getElementById('tab-'+s).classList.toggle('active',s===t);
   });
@@ -851,6 +1028,7 @@ function showTab(t){
   if(t==='alumnos')renderAlumnos();
   if(t==='pagos')renderPagos();
   if(t==='horarios')renderHorarios();
+  if(t==='balance')renderBalance();
 }
 
 // ── ACCORDION (tarjetas de alumno: el detalle se abre al tocar) ───────
@@ -995,8 +1173,9 @@ function openModal(type,id=null){
       document.getElementById('f-monto').value=a.monto||'';
     }else{
       ['f-nombre','f-apellido','f-tel','f-email','f-medico'].forEach(i=>document.getElementById(i).value='');
-      document.getElementById('f-plan').value='Fuerza Base';
-      document.getElementById('f-monto').value=planMontoDefault('Fuerza Base');
+      const primero=primerPlanActivo();
+      document.getElementById('f-plan').value=primero?primero.nombre:'';
+      document.getElementById('f-monto').value=primero?primero.monto:'';
       document.getElementById('f-tipo').value='Mensual';
     }
     document.getElementById('overlay-alumno').classList.add('open');
@@ -1121,10 +1300,85 @@ async function toggleHistMes(mes){
   }catch(e){ showToast('❌ Error al actualizar. Revisá tu conexión.', 'error'); }
 }
 
+// ── CATÁLOGO DE PLANES (dentro del modal de Tarifas) ─────────────────────
+function renderPlanesCatalogo(){
+  const el=document.getElementById('planes-catalogo-list');
+  if(!planes.length){el.innerHTML=`<div class="empty" style="padding:16px 0;">Sin planes cargados</div>`;return;}
+  const sorted=[...planes].sort((a,b)=>AREAS.indexOf(a.area)-AREAS.indexOf(b.area)||a.nombre.localeCompare(b.nombre));
+  el.innerHTML = sorted.map(p=>{
+    const inactivo = p.activo===false;
+    return`<div class="pago-card" style="${inactivo?'opacity:.55;':''}">
+      <div class="pago-info">
+        <span class="pago-nombre">
+          <span class="badge ${areaBadgeClass(p.area)}">${p.nombre}</span>
+          ${inactivo?'<span class="badge b-gray">Inactivo</span>':''}
+        </span>
+        <span class="pago-detalle">${p.detalle||'—'}</span>
+      </div>
+      <div class="pago-right">
+        <span class="pago-monto">${fmtMoney(p.monto)}</span>
+        <button class="icon-btn" title="Editar" onclick="openPlanModal(${p.id})">✎</button>
+        <button class="icon-btn ${inactivo?'':'del'}" title="${inactivo?'Reactivar':'Desactivar'}" onclick="togglePlanActivo(${p.id})">${inactivo?'↺':'⏸'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+let editPlanId=null;
+function openPlanModal(id=null){
+  editPlanId=id;
+  document.getElementById('modal-plan-title').textContent = id?'Editar plan':'Nuevo plan';
+  if(id){
+    const p=planes.find(x=>x.id===id);
+    document.getElementById('p-area').value=p.area;
+    document.getElementById('p-nombre').value=p.nombre;
+    document.getElementById('p-detalle').value=p.detalle||'';
+    document.getElementById('p-monto').value=p.monto||'';
+  }else{
+    document.getElementById('p-area').value='Fuerza';
+    document.getElementById('p-nombre').value='';
+    document.getElementById('p-detalle').value='';
+    document.getElementById('p-monto').value='';
+  }
+  document.getElementById('overlay-plan').classList.add('open');
+}
+async function savePlan(){
+  const area=document.getElementById('p-area').value;
+  const nombre=document.getElementById('p-nombre').value.trim();
+  if(!nombre){alert('Ingresá el nombre del plan');return;}
+  const detalle=document.getElementById('p-detalle').value.trim();
+  const monto=Number(document.getElementById('p-monto').value)||0;
+  const btn=document.querySelector('#overlay-plan .btn-primary');
+  const originalText=btn.textContent; btn.disabled=true; btn.textContent='Guardando...';
+  try{
+    if(editPlanId){
+      const saved=await dbUpdatePlan(editPlanId, {area,nombre,detalle,monto});
+      planes=planes.map(x=>x.id===editPlanId?saved:x);
+    }else{
+      const saved=await dbInsertPlan({area,nombre,detalle,monto,activo:true});
+      planes.push(saved);
+    }
+    closeModal('overlay-plan');
+    renderPlanesCatalogo(); renderPlanOptions(); renderAlumnos();
+    showToast(editPlanId?'✅ Plan actualizado':'✅ Plan agregado','success');
+  }catch(e){ showToast('❌ Error al guardar. Revisá tu conexión.', 'error'); }
+  btn.disabled=false; btn.textContent=originalText;
+}
+async function togglePlanActivo(id){
+  const p=planes.find(x=>x.id===id); if(!p)return;
+  const activoActual = p.activo!==false;
+  try{
+    const saved=await dbUpdatePlan(id, {activo: !activoActual});
+    planes=planes.map(x=>x.id===id?saved:x);
+    renderPlanesCatalogo(); renderPlanOptions();
+    showToast(activoActual?'Plan desactivado':'✅ Plan reactivado','success');
+  }catch(e){ showToast('❌ Error al actualizar. Revisá tu conexión.', 'error'); }
+}
+
 // ── TARIFAS DE PLANES ───────────────────────────────────────────────────
 function openTarifas(){
   document.getElementById('tar-mes').value = mesActualKey();
   document.getElementById('tar-monto').value = '';
+  renderPlanesCatalogo();
   renderTarifasList();
   document.getElementById('overlay-tarifas').classList.add('open');
 }
@@ -1355,6 +1609,129 @@ function renderPagosStats(){
   }).join('');
 }
 
+// ── BALANCE (ingresos vs. gastos) ─────────────────────────────────────────
+function totalGastosMes(mes){
+  return gastos.filter(g=>g.mes===mes).reduce((s,g)=>s+Number(g.monto||0),0);
+}
+let mesBalanceActual = mesActualKey();
+function cambiarMesBalance(delta){ mesBalanceActual=addMonthKey(mesBalanceActual,delta); renderBalance(); }
+function irMesActualBalance(){ mesBalanceActual=mesActualKey(); renderBalance(); }
+
+function renderBalance(){
+  const mes=mesBalanceActual;
+  document.getElementById('balance-mes-label').textContent = mesLabel(mes).replace(/^./,c=>c.toUpperCase());
+  document.getElementById('btn-mes-actual-balance').style.display = mes===mesActualKey() ? 'none' : 'inline-flex';
+  const ingresos = totalCobradoMes(mes);
+  const gastosMes = totalGastosMes(mes);
+  const neto = ingresos-gastosMes;
+  document.getElementById('bal-ingresos').textContent=fmtMoney(ingresos);
+  document.getElementById('bal-gastos').textContent=fmtMoney(gastosMes);
+  const ne=document.getElementById('bal-neto');
+  ne.textContent=(neto<0?'-':'')+fmtMoney(Math.abs(neto));
+  ne.className='stat-val '+(neto>=0?'sv-green':'sv-red');
+  const list=[...gastos].filter(g=>g.mes===mes).sort((a,b)=>Number(b.monto||0)-Number(a.monto||0));
+  const tb=document.getElementById('tbody-gastos');
+  if(!list.length){tb.innerHTML=`<div class="empty"><div class="empty-icon">💸</div>No hay gastos cargados para ${mesLabel(mes)}</div>`;}
+  else tb.innerHTML=list.map(g=>`
+    <div class="g-card">
+      <div class="g-card-info">
+        <div class="g-card-concepto">${g.concepto||'(sin concepto)'}</div>
+        <div class="g-card-sub"><span class="badge b-gray">${g.categoria||'Otro'}</span>${g.notas?`<span>${g.notas}</span>`:''}</div>
+      </div>
+      <div class="g-card-monto">-${fmtMoney(g.monto)}</div>
+      <div class="g-card-actions">
+        <button class="icon-btn" title="Editar" onclick="openGastoModal(${g.id})"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="icon-btn del" title="Eliminar" onclick="deleteGasto(${g.id})"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+      </div>
+    </div>`).join('');
+  if(document.getElementById('balance-stats-panel').classList.contains('open')) renderBalanceStats();
+}
+function toggleBalanceStatsPanel(){
+  const el=document.getElementById('balance-stats-panel');
+  const abrir = !el.classList.contains('open');
+  el.classList.toggle('open',abrir);
+  document.getElementById('balance-stats-toggle-label').textContent = abrir?'✕ Ocultar estadísticas':'📊 Ver estadísticas';
+  if(abrir) renderBalanceStats();
+}
+function renderBalanceStats(){
+  const meses=[]; let k=mesBalanceActual; for(let i=0;i<12;i++){ meses.unshift(k); k=addMonthKey(k,-1); }
+  const ingresosArr=meses.map(m=>totalCobradoMes(m));
+  const gastosArr=meses.map(m=>totalGastosMes(m));
+  const netoArr=meses.map((m,i)=>ingresosArr[i]-gastosArr[i]);
+  const totalIngresos=ingresosArr.reduce((s,v)=>s+v,0);
+  const totalGastos=gastosArr.reduce((s,v)=>s+v,0);
+  const totalNeto=totalIngresos-totalGastos;
+  document.getElementById('bal-kpi-ingresos').textContent=fmtMoney(totalIngresos);
+  document.getElementById('bal-kpi-gastos').textContent=fmtMoney(totalGastos);
+  const kn=document.getElementById('bal-kpi-neto');
+  kn.textContent=(totalNeto<0?'-':'')+fmtMoney(Math.abs(totalNeto));
+  kn.className='stat-val '+(totalNeto>=0?'sv-green':'sv-red');
+  const max=Math.max(...netoArr.map(v=>Math.abs(v)),1);
+  document.getElementById('balance-chart').innerHTML = meses.map((m,i)=>{
+    const v=netoArr[i];
+    const h=v!==0?Math.max(Math.round(Math.abs(v)/max*100),3):0;
+    return`<div class="chart-col">
+      <div class="chart-val">${v!==0?fmtMoney(v):''}</div>
+      <div class="chart-bar-wrap"><div class="chart-bar" style="height:${h}%;background:${v>=0?'var(--green)':'var(--red)'}"></div></div>
+      <div class="chart-mlabel">${mesLabelCorto(m)}</div>
+    </div>`;
+  }).join('');
+}
+
+let editGastoId=null;
+function openGastoModal(id=null){
+  editGastoId=id;
+  document.getElementById('modal-gasto-title').textContent = id?'Editar gasto':'Nuevo gasto';
+  if(id){
+    const g=gastos.find(x=>x.id===id);
+    document.getElementById('g-concepto').value=g.concepto||'';
+    document.getElementById('g-categoria').value=g.categoria||'Otro';
+    document.getElementById('g-monto').value=g.monto||'';
+    document.getElementById('g-mes').value=g.mes||mesBalanceActual;
+    document.getElementById('g-notas').value=g.notas||'';
+  }else{
+    document.getElementById('g-concepto').value='';
+    document.getElementById('g-categoria').value='Otro';
+    document.getElementById('g-monto').value='';
+    document.getElementById('g-mes').value=mesBalanceActual;
+    document.getElementById('g-notas').value='';
+  }
+  document.getElementById('overlay-gasto').classList.add('open');
+}
+async function saveGasto(){
+  const concepto=document.getElementById('g-concepto').value.trim();
+  if(!concepto){alert('Ingresá el concepto del gasto');return;}
+  const categoria=document.getElementById('g-categoria').value;
+  const monto=Number(document.getElementById('g-monto').value)||0;
+  const mes=document.getElementById('g-mes').value || mesActualKey();
+  const notas=document.getElementById('g-notas').value.trim();
+  const btn=document.querySelector('#overlay-gasto .btn-primary');
+  const originalText=btn.textContent; btn.disabled=true; btn.textContent='Guardando...';
+  try{
+    if(editGastoId){
+      const saved=await dbUpdateGasto(editGastoId, {concepto,categoria,monto,mes,notas});
+      gastos=gastos.map(x=>x.id===editGastoId?saved:x);
+    }else{
+      const saved=await dbInsertGasto({concepto,categoria,monto,mes,notas});
+      gastos.push(saved);
+    }
+    mesBalanceActual=mes;
+    closeModal('overlay-gasto'); renderBalance();
+    showToast(editGastoId?'✅ Gasto actualizado':'✅ Gasto agregado','success');
+  }catch(e){ showToast('❌ Error al guardar. Revisá tu conexión.', 'error'); }
+  btn.disabled=false; btn.textContent=originalText;
+}
+async function deleteGasto(id){
+  const g=gastos.find(x=>x.id===id); if(!g)return;
+  if(!confirm(`¿Eliminar el gasto "${g.concepto}"?`))return;
+  try{
+    await dbDeleteGasto(id);
+    gastos=gastos.filter(x=>x.id!==id);
+    renderBalance();
+    showToast('✅ Gasto eliminado','success');
+  }catch(e){ showToast('❌ Error al eliminar. Revisá tu conexión.', 'error'); }
+}
+
 // ── TOAST ─────────────────────────────────────────────────────────────
 let toastTimer=null;
 function showToast(msg,type=''){
@@ -1366,11 +1743,11 @@ function showToast(msg,type=''){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){['overlay-alumno','overlay-pago','overlay-tarifas','overlay-historial','overlay-horario'].forEach(id=>closeModal(id));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){['overlay-alumno','overlay-pago','overlay-tarifas','overlay-plan','overlay-historial','overlay-horario','overlay-gasto'].forEach(id=>closeModal(id));}});
 document.getElementById('today-badge').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-renderPlanOptions();
 (async function init(){
-  await Promise.all([load(), loadTarifas(), loadHorarios()]);
+  await Promise.all([load(), loadTarifas(), loadHorarios(), loadPlanes(), loadGastos()]);
+  renderPlanOptions();
   renderAlumnos();
   const splash=document.getElementById('app-splash');
   splash.classList.add('hide');
