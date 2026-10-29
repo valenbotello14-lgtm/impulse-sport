@@ -1,7 +1,8 @@
 -- Impulse Sport — esquema completo para un proyecto Supabase NUEVO
 -- Ejecutar UNA SOLA VEZ en el SQL Editor del proyecto nuevo (Project → SQL Editor → New query)
--- Crea las dos tablas que usa la app ("alumnos" y "tarifas") con las mismas columnas
--- y el mismo tipo de policy (acceso total con la clave "anon") que el proyecto viejo.
+-- Crea las tres tablas que usa la app ("alumnos", "tarifas" y "horarios") con las
+-- mismas columnas y el mismo tipo de policy (acceso total con la clave "anon") que
+-- el proyecto viejo.
 
 create table if not exists alumnos (
   id bigint generated always as identity primary key,
@@ -35,8 +36,19 @@ create table if not exists tarifas (
   created_at timestamptz not null default now()
 );
 
+create table if not exists horarios (
+  id bigint generated always as identity primary key,
+  dia text not null,            -- 'Lunes'..'Domingo'
+  hora text not null,           -- 'HH:MM'
+  nombre text not null default '',
+  cupo integer,                 -- null = sin límite
+  inscriptos jsonb not null default '[]'::jsonb,  -- array de ids de alumnos
+  created_at timestamptz not null default now()
+);
+
 alter table alumnos enable row level security;
 alter table tarifas enable row level security;
+alter table horarios enable row level security;
 
 -- La app usa la clave "anon" para leer/escribir todo (no hay login de usuarios).
 create policy "alumnos_anon_all" on alumnos
@@ -46,6 +58,12 @@ create policy "alumnos_anon_all" on alumnos
   with check (true);
 
 create policy "tarifas_anon_all" on tarifas
+  for all
+  to public
+  using (true)
+  with check (true);
+
+create policy "horarios_anon_all" on horarios
   for all
   to public
   using (true)
