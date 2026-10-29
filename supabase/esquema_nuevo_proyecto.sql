@@ -25,7 +25,10 @@ create table if not exists alumnos (
   caleventids text,
   ultimopago text not null default '',
   pagado boolean not null default false,
-  pagosmensuales jsonb not null default '{}'::jsonb
+  pagosmensuales jsonb not null default '{}'::jsonb,
+  baja boolean not null default false,
+  fecha_baja text not null default '',
+  motivo_baja text not null default ''
 );
 
 create table if not exists tarifas (
