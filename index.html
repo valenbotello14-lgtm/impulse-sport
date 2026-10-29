@@ -77,6 +77,7 @@ button:focus-visible,[tabindex]:focus-visible,a:focus-visible{outline:2px solid 
 /* STATS */
 .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:22px;}
 .stats-6{grid-template-columns:repeat(6,1fr);}
+.stats-7{grid-template-columns:repeat(7,1fr);}
 .stat{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);}
 .stat-label{font-size:10.5px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
 .stat-val{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;}
@@ -86,7 +87,7 @@ button:focus-visible,[tabindex]:focus-visible,a:focus-visible{outline:2px solid 
 .toolbar{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
 .search-wrap{flex:1;min-width:200px;position:relative;}
 .search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;}
-input[type=text],input[type=date],input[type=month],input[type=number],input[type=tel],select,textarea{background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .15s;}
+input[type=text],input[type=date],input[type=month],input[type=number],input[type=tel],input[type=time],select,textarea{background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .15s;}
 input::placeholder,textarea::placeholder{color:var(--text3);}
 select{color-scheme:dark;}
 input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0 0 3px rgba(0,200,240,0.15);}
@@ -112,8 +113,6 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 .b-blue{background:rgba(0,200,240,.15);color:var(--cyan2);border:1px solid rgba(0,200,240,.35);}
 .b-gray{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
 .b-purple{background:var(--purplebg);color:var(--purple);border:1px solid rgba(196,166,251,.35);}
-.plan-base{background:rgba(0,170,221,.14);color:#5FD3F5;border:1px solid rgba(0,170,221,.35);}
-.plan-premium{background:var(--purplebg);color:var(--purple);border:1px solid rgba(196,166,251,.35);}
 .icon-btn{width:32px;height:32px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
 .icon-btn:hover{background:var(--bg3);color:var(--text);}
 .icon-btn.del:hover{background:var(--redbg);color:var(--red);border-color:var(--red);}
@@ -150,6 +149,38 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 .p-card-bottom{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap;}
 .p-card-date{font-size:11.5px;color:var(--text3);}
 .p-card-actions{display:flex;gap:6px;margin-left:auto;}
+
+/* HORARIOS — grilla por día */
+.week-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px;margin-bottom:16px;}
+.week-cell{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;transition:all .15s;}
+.week-cell:hover{border-color:var(--border2);}
+.week-cell.active{border-color:var(--blue2);box-shadow:0 0 0 2px rgba(34,114,216,.35) inset;background:var(--bg3);}
+.week-cell-day{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);margin-bottom:8px;}
+.week-cell-people{font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:700;color:var(--cyan2);font-variant-numeric:tabular-nums;}
+.week-cell-people-label{font-size:9.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;}
+.week-cell-sub{font-size:11px;font-weight:600;margin-top:5px;}
+.day-pills{display:flex;gap:6px;overflow-x:auto;}
+.day-pill{flex-shrink:0;height:36px;padding:0 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.day-pill:hover{border-color:var(--border2);color:var(--text);}
+.day-pill.active{background:var(--blue2);border-color:var(--blue2);color:#fff;}
+.h-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;}
+.h-card-top{display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;}
+.h-card-top:hover{background:var(--bg3);}
+.h-card-hora{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--cyan2);min-width:50px;font-variant-numeric:tabular-nums;}
+.h-card-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
+.h-card-name{font-weight:600;font-size:13.5px;}
+.h-card.open .chev{transform:rotate(90deg);}
+.h-card-detail{max-height:0;overflow:hidden;transition:max-height .25s ease;background:var(--bg);}
+.h-card.open .h-card-detail{max-height:480px;}
+.h-card-detail-inner{display:flex;flex-direction:column;gap:12px;padding:14px;border-top:1px solid var(--border);}
+.insc-list{display:flex;flex-wrap:wrap;gap:6px;}
+.insc-empty{color:var(--text3);font-size:12.5px;}
+.insc-chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:4px 6px 4px 10px;border-radius:20px;background:rgba(0,200,240,.15);color:var(--cyan2);border:1px solid rgba(0,200,240,.35);}
+.insc-chip button{width:16px;height:16px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;line-height:1;padding:0;flex-shrink:0;}
+.insc-chip button:hover{background:var(--red);color:#fff;}
+.insc-add{display:flex;gap:8px;}
+.insc-add select{flex:1;}
+.h-card-detail-actions{display:flex;gap:8px;}
 
 /* MODAL */
 .overlay{display:none;position:fixed;inset:0;background:rgba(3,10,22,0.72);z-index:200;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;}
@@ -219,7 +250,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
   .fab{display:flex;}
   .btn-header-white{display:none;}
 }
-@media(max-width:600px){.stats,.stats-6{grid-template-columns:repeat(2,1fr);}.form-row{grid-template-columns:1fr;}}
+@media(max-width:600px){.stats,.stats-6,.stats-7{grid-template-columns:repeat(2,1fr);}.form-row{grid-template-columns:1fr;}}
 @media(max-width:480px){
   .header{padding:0 12px;gap:8px;}
   .logo{gap:8px;}
@@ -270,17 +301,22 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
     Pagos y Membresías
   </div>
+  <div class="tab" onclick="showTab('horarios')" id="tab-horarios">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Horarios
+  </div>
 </nav>
 
 <main class="main">
 
   <!-- ── ALUMNOS ── -->
   <section class="section active" id="sec-alumnos">
-    <div class="stats stats-6">
+    <div class="stats stats-7">
       <div class="stat"><div class="stat-label">Total alumnos</div><div class="stat-val sv-blue" id="st-total">0</div></div>
-      <div class="stat"><div class="stat-label">Salud</div><div class="stat-val sv-blue" id="st-salud">0</div></div>
-      <div class="stat"><div class="stat-label">Performance</div><div class="stat-val sv-blue" id="st-performance">0</div></div>
-      <div class="stat"><div class="stat-label">Performance PRO</div><div class="stat-val sv-blue" id="st-performancepro">0</div></div>
+      <div class="stat"><div class="stat-label">🏋️ Fuerza</div><div class="stat-val sv-blue" id="st-fuerza">0</div></div>
+      <div class="stat"><div class="stat-label">⚡ Velocidad</div><div class="stat-val sv-yellow" id="st-velocidad">0</div></div>
+      <div class="stat"><div class="stat-label">🧠 Inteligencia</div><div class="stat-val" style="color:var(--purple)" id="st-inteligencia">0</div></div>
+      <div class="stat"><div class="stat-label">🌟 Rendimiento</div><div class="stat-val sv-green" id="st-rendimiento">0</div></div>
       <div class="stat"><div class="stat-label">Con condición médica</div><div class="stat-val sv-yellow" id="st-medico">0</div></div>
       <div class="stat"><div class="stat-label">Activos hoy</div><div class="stat-val sv-green" id="st-activos">0</div></div>
     </div>
@@ -289,15 +325,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input type="text" class="search-inp" id="search-alumnos" placeholder="Buscar alumno..." oninput="renderAlumnos()">
       </div>
-      <select class="filter-sel" id="filter-plan" onchange="renderAlumnos()">
-        <option value="">Todos los planes</option>
-        <option value="Salud Base">Salud — Base</option>
-        <option value="Salud Premium">Salud — Premium</option>
-        <option value="Performance Base">Performance — Base</option>
-        <option value="Performance Premium">Performance — Premium</option>
-        <option value="Performance PRO Base">Performance PRO — Base</option>
-        <option value="Performance PRO Premium">Performance PRO — Premium</option>
-      </select>
+      <select class="filter-sel" id="filter-plan" onchange="renderAlumnos()"></select>
       <select class="filter-sel" id="filter-estado-a" onchange="renderAlumnos()">
         <option value="">Todos</option>
         <option value="activo">Activo</option>
@@ -361,6 +389,24 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
     <div class="card-list" id="tbody-pagos"></div>
   </section>
 
+  <!-- ── HORARIOS ── -->
+  <section class="section" id="sec-horarios">
+    <div class="week-grid" id="week-grid"></div>
+    <div class="toolbar">
+      <div class="day-pills" id="day-pills" style="flex:1;">
+        <button class="day-pill" data-dia="Lunes" onclick="cambiarDia('Lunes')">Lun</button>
+        <button class="day-pill" data-dia="Martes" onclick="cambiarDia('Martes')">Mar</button>
+        <button class="day-pill" data-dia="Miércoles" onclick="cambiarDia('Miércoles')">Mié</button>
+        <button class="day-pill" data-dia="Jueves" onclick="cambiarDia('Jueves')">Jue</button>
+        <button class="day-pill" data-dia="Viernes" onclick="cambiarDia('Viernes')">Vie</button>
+        <button class="day-pill" data-dia="Sábado" onclick="cambiarDia('Sábado')">Sáb</button>
+        <button class="day-pill" data-dia="Domingo" onclick="cambiarDia('Domingo')">Dom</button>
+      </div>
+      <button class="btn btn-primary" onclick="openHorarioModal()">+ Nuevo horario</button>
+    </div>
+    <div class="card-list" id="tbody-horarios"></div>
+  </section>
+
 </main>
 
 <!-- NAV INFERIOR (celular) -->
@@ -373,6 +419,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
     <button class="bn-item" data-tab="pagos" onclick="showTab('pagos')">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
       Pagos
+    </button>
+    <button class="bn-item" data-tab="horarios" onclick="showTab('horarios')">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Horarios
     </button>
   </div>
 </nav>
@@ -395,14 +445,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
     <div class="section-divider">Membresía</div>
     <div class="form-row">
       <div class="form-group"><label>Plan</label>
-        <select id="f-plan">
-          <option value="Salud Base">Salud — Base</option>
-          <option value="Salud Premium">Salud — Premium</option>
-          <option value="Performance Base">Performance — Base</option>
-          <option value="Performance Premium">Performance — Premium</option>
-          <option value="Performance PRO Base">Performance PRO — Base</option>
-          <option value="Performance PRO Premium">Performance PRO — Premium</option>
-        </select>
+        <select id="f-plan" onchange="document.getElementById('f-monto').value = planMontoDefault(this.value) || ''"></select>
       </div>
       <div class="form-group"><label>Tipo de membresía</label>
         <select id="f-tipo"><option value="Mensual">Mensual</option><option value="Trimestral">Trimestral</option><option value="Por clases">Por clases</option></select>
@@ -440,14 +483,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
     <p style="font-size:12px;color:var(--text2);margin-bottom:16px;">Cargá un aumento y desde qué mes rige. Los meses anteriores no se modifican.</p>
     <div class="form-row">
       <div class="form-group"><label>Plan</label>
-        <select id="tar-plan">
-          <option value="Salud Base">Salud — Base</option>
-          <option value="Salud Premium">Salud — Premium</option>
-          <option value="Performance Base">Performance — Base</option>
-          <option value="Performance Premium">Performance — Premium</option>
-          <option value="Performance PRO Base">Performance PRO — Base</option>
-          <option value="Performance PRO Premium">Performance PRO — Premium</option>
-        </select>
+        <select id="tar-plan"></select>
       </div>
       <div class="form-group"><label>Monto mensual ($)</label><input type="number" id="tar-monto" placeholder="0"></div>
     </div>
@@ -457,6 +493,33 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
     <div id="tarifas-list"></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('overlay-tarifas')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL HORARIO -->
+<div class="overlay" id="overlay-horario" onclick="handleOvClick(event,'overlay-horario')">
+  <div class="modal">
+    <h3><span>🗓️</span> <span id="modal-horario-title">Nuevo horario</span></h3>
+    <div class="form-row">
+      <div class="form-group"><label>Día</label>
+        <select id="h-dia">
+          <option value="Lunes">Lunes</option>
+          <option value="Martes">Martes</option>
+          <option value="Miércoles">Miércoles</option>
+          <option value="Jueves">Jueves</option>
+          <option value="Viernes">Viernes</option>
+          <option value="Sábado">Sábado</option>
+          <option value="Domingo">Domingo</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Hora</label><input type="time" id="h-hora"></div>
+    </div>
+    <div class="form-group"><label>Nombre de la clase / turno</label><input type="text" id="h-nombre" placeholder="Ej: Funcional, Spinning..."></div>
+    <div class="form-group"><label>Cupo máximo (dejar vacío = sin límite)</label><input type="number" id="h-cupo" placeholder="15"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('overlay-horario')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveHorario()">Guardar</button>
     </div>
   </div>
 </div>
@@ -499,6 +562,37 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 let alumnos=[], nextId=1;
 
+// ── CATÁLOGO DE PLANES ───────────────────────────────────────────────
+const AREAS = ['Fuerza','Velocidad','Inteligencia de Juego','Planes de Rendimiento'];
+const AREA_ICON = {'Fuerza':'🏋️','Velocidad':'⚡','Inteligencia de Juego':'🧠','Planes de Rendimiento':'🌟'};
+const AREA_BADGE = {'Fuerza':'b-blue','Velocidad':'b-yellow','Inteligencia de Juego':'b-purple','Planes de Rendimiento':'b-green'};
+const PLANES = [
+  {area:'Fuerza', nombre:'Fuerza Base', detalle:'2 sesiones semanales', monto:32000},
+  {area:'Fuerza', nombre:'Fuerza Premium', detalle:'3 o más sesiones semanales', monto:38000},
+  {area:'Velocidad', nombre:'Velocidad Base', detalle:'1 sesión semanal', monto:35000},
+  {area:'Velocidad', nombre:'Velocidad Premium', detalle:'2 sesiones semanales', monto:62000},
+  {area:'Inteligencia de Juego', nombre:'Grupal', detalle:'4 a 6 jugadores', monto:40000},
+  {area:'Inteligencia de Juego', nombre:'Dúo', detalle:'2 jugadores', monto:45000},
+  {area:'Inteligencia de Juego', nombre:'Dúo Plus', detalle:'2/3 jugadores · 2 sesiones semanales', monto:52000},
+  {area:'Planes de Rendimiento', nombre:'Plan Formación', detalle:'1 sesión de Fuerza + 1 de Inteligencia de Juego', monto:55000},
+  {area:'Planes de Rendimiento', nombre:'Plan Potencia', detalle:'Fuerza Premium + Velocidad Base', monto:58000},
+  {area:'Planes de Rendimiento', nombre:'Plan Estrategia', detalle:'Fuerza Premium + Inteligencia de Juego', monto:60000},
+  {area:'Planes de Rendimiento', nombre:'Plan Juego Rápido', detalle:'Velocidad Base + Inteligencia de Juego', monto:62000},
+  {area:'Planes de Rendimiento', nombre:'Plan Integral', detalle:'Fuerza Premium + Velocidad Base + Inteligencia de Juego', monto:65000},
+];
+function planArea(nombre){ const p=PLANES.find(x=>x.nombre===nombre); return p?p.area:''; }
+function planMontoDefault(nombre){ const p=PLANES.find(x=>x.nombre===nombre); return p?p.monto:0; }
+function areaBadgeClass(area){ return AREA_BADGE[area] || 'b-gray'; }
+function renderPlanOptions(){
+  const grupos = AREAS.map(area=>{
+    const opts = PLANES.filter(p=>p.area===area).map(p=>`<option value="${p.nombre}">${p.nombre} — ${p.detalle}</option>`).join('');
+    return `<optgroup label="${AREA_ICON[area]} ${area}">${opts}</optgroup>`;
+  }).join('');
+  document.getElementById('f-plan').innerHTML = grupos;
+  document.getElementById('tar-plan').innerHTML = grupos;
+  document.getElementById('filter-plan').innerHTML = '<option value="">Todos los planes</option>' + grupos;
+}
+
 function dbHeaders(extra={}){
   return {
     'apikey': SUPABASE_ANON_KEY,
@@ -517,7 +611,7 @@ function rowToAlumno(r){
     tel: r.tel || '',
     email: r.email || '',
     medico: r.medico || '',
-    plan: r.plan || 'Salud Base',
+    plan: r.plan || 'Fuerza Base',
     tipo: r.tipo || 'Mensual',
     monto: r.monto || '',
     venc: r.venc || '',
@@ -537,7 +631,7 @@ function rowToAlumno(r){
 function alumnoToRow(a){
   return {
     nombre: a.nombre || '', apellido: a.apellido || '', tel: a.tel || '', email: a.email || '',
-    medico: a.medico || '', plan: a.plan || 'Base', tipo: a.tipo || 'Mensual',
+    medico: a.medico || '', plan: a.plan || 'Fuerza Base', tipo: a.tipo || 'Mensual',
     monto: a.monto != null ? String(a.monto) : '', venc: a.venc || '', fechaplan: a.fechaplan || '',
     lesion: a.lesion || 0, notasplan: a.notasplan || '', manual: a.manual || '📝 Sin definir',
     asistencia: a.asistencia || {}, calsynced: a.calSynced || null, caleventids: a.calEventIds || null,
@@ -619,9 +713,42 @@ function getTarifa(plan, mes){
   return val;
 }
 
+// ── DATA (SUPABASE) — HORARIOS ───────────────────────────────────────
+let horarios=[];
+async function loadHorarios(){
+  try{
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/horarios?select=*&order=hora.asc`, { headers: dbHeaders() });
+    if(!resp.ok) throw new Error('Error de conexión a la base de datos');
+    horarios = await resp.json();
+    try{localStorage.setItem('impulse_horarios_cache', JSON.stringify(horarios));}catch(e){}
+  }catch(e){
+    try{const c=localStorage.getItem('impulse_horarios_cache'); horarios = c ? JSON.parse(c) : [];}catch(e2){horarios=[];}
+  }
+}
+async function dbInsertHorario(h){
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/horarios`, {
+    method:'POST', headers: dbHeaders({'Prefer':'return=representation'}), body: JSON.stringify(h)
+  });
+  if(!resp.ok) throw new Error('Error al guardar el horario');
+  const data = await resp.json();
+  return data[0];
+}
+async function dbUpdateHorario(id, patch){
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/horarios?id=eq.${id}`, {
+    method:'PATCH', headers: dbHeaders({'Prefer':'return=representation'}), body: JSON.stringify(patch)
+  });
+  if(!resp.ok) throw new Error('Error al actualizar el horario');
+  const data = await resp.json();
+  return data[0];
+}
+async function dbDeleteHorario(id){
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/horarios?id=eq.${id}`, { method:'DELETE', headers: dbHeaders() });
+  if(!resp.ok) throw new Error('Error al eliminar el horario');
+}
+
 // ── BACKUP: EXPORT / IMPORT ─────────────────────────────────────────
 function exportData(){
-  const data = JSON.stringify({alumnos, tarifas}, null, 2);
+  const data = JSON.stringify({alumnos, tarifas, horarios}, null, 2);
   const blob = new Blob([data], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -645,8 +772,9 @@ function importData(event){
       // Compatible con backups viejos (array plano de alumnos) y con el formato nuevo {alumnos, tarifas}.
       const data = Array.isArray(raw) ? raw : raw.alumnos;
       const tarifasData = Array.isArray(raw) ? [] : (raw.tarifas || []);
+      const horariosData = Array.isArray(raw) ? [] : (raw.horarios || []);
       if(!Array.isArray(data)) throw new Error('Formato inválido');
-      if(!confirm(`¿Reemplazar todos los datos actuales con esta copia de seguridad? (${data.length} alumnos, ${tarifasData.length} tarifas). Esto va a borrar y recrear los datos en la base de datos.`)) {
+      if(!confirm(`¿Reemplazar todos los datos actuales con esta copia de seguridad? (${data.length} alumnos, ${tarifasData.length} tarifas, ${horariosData.length} horarios). Esto va a borrar y recrear los datos en la base de datos.`)) {
         event.target.value = '';
         return;
       }
@@ -654,6 +782,7 @@ function importData(event){
       // Delete all current rows
       for(const a of alumnos){ try{ await dbDelete(a.id); }catch(e2){} }
       for(const t of tarifas){ try{ await dbDeleteTarifa(t.id); }catch(e2){} }
+      for(const h of horarios){ try{ await dbDeleteHorario(h.id); }catch(e2){} }
       // Insert all imported rows
       const inserted = [];
       for(const a of data){
@@ -667,12 +796,19 @@ function importData(event){
         const saved = await dbInsertTarifa(rest);
         insertedTarifas.push(saved);
       }
+      const insertedHorarios = [];
+      for(const h of horariosData){
+        const { id, ...rest } = h;
+        const saved = await dbInsertHorario(rest);
+        insertedHorarios.push(saved);
+      }
       alumnos = inserted;
       tarifas = insertedTarifas;
+      horarios = insertedHorarios;
       nextId = alumnos.length ? Math.max(...alumnos.map(a=>a.id)) + 1 : 1;
       save();
-      renderAlumnos(); renderPagos();
-      showToast(`✅ Datos restaurados: ${alumnos.length} alumnos, ${tarifas.length} tarifas`, 'success');
+      renderAlumnos(); renderPagos(); renderHorarios();
+      showToast(`✅ Datos restaurados: ${alumnos.length} alumnos, ${tarifas.length} tarifas, ${horarios.length} horarios`, 'success');
     } catch(err) {
       showToast('❌ Error al restaurar. Revisá el archivo o tu conexión.', 'error');
     }
@@ -707,13 +843,14 @@ function getPagoStatus(a){ return getEstadoPagoMes(a, mesActualKey()); }
 
 // ── TABS ──────────────────────────────────────────────────────────────
 function showTab(t){
-  ['alumnos','pagos'].forEach(s=>{
+  ['alumnos','pagos','horarios'].forEach(s=>{
     document.getElementById('sec-'+s).classList.toggle('active',s===t);
     document.getElementById('tab-'+s).classList.toggle('active',s===t);
   });
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.toggle('active', b.dataset.tab===t));
   if(t==='alumnos')renderAlumnos();
   if(t==='pagos')renderPagos();
+  if(t==='horarios')renderHorarios();
 }
 
 // ── ACCORDION (tarjetas de alumno: el detalle se abre al tocar) ───────
@@ -732,9 +869,10 @@ function renderAlumnos(){
     return true;
   });
   document.getElementById('st-total').textContent=alumnos.length;
-  document.getElementById('st-salud').textContent=alumnos.filter(a=>(a.plan||'').startsWith('Salud')).length;
-  document.getElementById('st-performance').textContent=alumnos.filter(a=>(a.plan||'').startsWith('Performance')&&!(a.plan||'').startsWith('Performance PRO')).length;
-  document.getElementById('st-performancepro').textContent=alumnos.filter(a=>(a.plan||'').startsWith('Performance PRO')).length;
+  document.getElementById('st-fuerza').textContent=alumnos.filter(a=>planArea(a.plan)==='Fuerza').length;
+  document.getElementById('st-velocidad').textContent=alumnos.filter(a=>planArea(a.plan)==='Velocidad').length;
+  document.getElementById('st-inteligencia').textContent=alumnos.filter(a=>planArea(a.plan)==='Inteligencia de Juego').length;
+  document.getElementById('st-rendimiento').textContent=alumnos.filter(a=>planArea(a.plan)==='Planes de Rendimiento').length;
   document.getElementById('st-medico').textContent=alumnos.filter(a=>a.medico&&a.medico.trim()&&a.medico.toLowerCase()!=='ninguna'&&a.medico.toLowerCase()!=='no').length;
   document.getElementById('st-activos').textContent=alumnos.filter(a=>getPagoStatus(a).key!=='vencido').length;
   const tb=document.getElementById('tbody-alumnos');
@@ -749,7 +887,7 @@ function renderAlumnos(){
           <div class="a-card-name">${fullName(a)}</div>
           ${a.email?`<div class="a-card-email">${a.email}</div>`:''}
           <div class="a-card-badges">
-            <span class="badge ${(a.plan||'').includes('Premium')?'plan-premium':'plan-base'}">${a.plan||'Sin plan'}</span>
+            <span class="badge ${areaBadgeClass(planArea(a.plan))}">${a.plan||'Sin plan'}</span>
             <span class="badge ${ps.cls}">${ps.label}</span>
           </div>
         </div>
@@ -852,12 +990,13 @@ function openModal(type,id=null){
       document.getElementById('f-tel').value=a.tel||'';
       document.getElementById('f-email').value=a.email||'';
       document.getElementById('f-medico').value=a.medico||'';
-      document.getElementById('f-plan').value=a.plan||'Salud Base';
+      document.getElementById('f-plan').value=a.plan||'Fuerza Base';
       document.getElementById('f-tipo').value=a.tipo||'Mensual';
       document.getElementById('f-monto').value=a.monto||'';
     }else{
-      ['f-nombre','f-apellido','f-tel','f-email','f-medico','f-monto'].forEach(i=>document.getElementById(i).value='');
-      document.getElementById('f-plan').value='Salud Base';
+      ['f-nombre','f-apellido','f-tel','f-email','f-medico'].forEach(i=>document.getElementById(i).value='');
+      document.getElementById('f-plan').value='Fuerza Base';
+      document.getElementById('f-monto').value=planMontoDefault('Fuerza Base');
       document.getElementById('f-tipo').value='Mensual';
     }
     document.getElementById('overlay-alumno').classList.add('open');
@@ -996,7 +1135,7 @@ function renderTarifasList(){
   el.innerHTML = sorted.map(t=>`
     <div class="pago-card">
       <div class="pago-info">
-        <span class="pago-nombre"><span class="badge ${(t.plan||'').includes('Premium')?'plan-premium':'plan-base'}">${t.plan}</span></span>
+        <span class="pago-nombre"><span class="badge ${areaBadgeClass(planArea(t.plan))}">${t.plan}</span></span>
         <span class="pago-detalle">Vigente desde ${mesLabel(t.mes)}</span>
       </div>
       <div class="pago-right">
@@ -1025,6 +1164,151 @@ async function removeTarifa(id){
     tarifas=tarifas.filter(t=>t.id!==id);
     renderTarifasList();renderPagos();
   }catch(e){ showToast('❌ Error al eliminar. Revisá tu conexión.', 'error'); }
+}
+
+// ── HORARIOS (grilla de clases por día) ─────────────────────────────────
+const DIAS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+function diaDeHoy(){ return DIAS[(new Date().getDay()+6)%7]; } // getDay(): 0=domingo
+let diaActual = diaDeHoy();
+function cambiarDia(d){ diaActual=d; renderHorarios(); }
+
+// Resumen semanal: por día, cuánta gente anotada y cuántos cupos libres quedan (clic = ir a ese día).
+function renderWeekGrid(){
+  document.getElementById('week-grid').innerHTML = DIAS.map(d=>{
+    const turnosDia = horarios.filter(h=>h.dia===d);
+    const anotados = turnosDia.reduce((s,h)=>s+((h.inscriptos||[]).length),0);
+    const conCupo = turnosDia.filter(h=>h.cupo!=null);
+    const libres = conCupo.reduce((s,h)=>s+Math.max(0,h.cupo-(h.inscriptos||[]).length),0);
+    const hayLibre = turnosDia.some(h=>h.cupo==null) || libres>0;
+    let sub, subCls;
+    if(!turnosDia.length){ sub='Sin turnos'; subCls='sv-gray'; }
+    else if(!conCupo.length){ sub='Sin límite'; subCls='sv-blue'; }
+    else{ sub=`${libres} libre${libres===1?'':'s'}`; subCls = hayLibre ? 'sv-green' : 'sv-red'; }
+    return`<div class="week-cell${d===diaActual?' active':''}" onclick="cambiarDia('${d}')">
+      <div class="week-cell-day">${d.slice(0,3)}</div>
+      <div class="week-cell-people">${anotados}</div>
+      <div class="week-cell-people-label">anotados</div>
+      <div class="week-cell-sub ${subCls}">${sub}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderHorarios(){
+  renderWeekGrid();
+  document.querySelectorAll('.day-pill').forEach(p=>p.classList.toggle('active', p.dataset.dia===diaActual));
+  const list = horarios.filter(h=>h.dia===diaActual).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
+  const tb = document.getElementById('tbody-horarios');
+  if(!list.length){ tb.innerHTML = `<div class="empty"><div class="empty-icon">🗓️</div>No hay horarios cargados para ${diaActual}</div>`; return; }
+  tb.innerHTML = list.map(h=>{
+    const inscriptos = h.inscriptos||[];
+    const disponibles = alumnos.filter(a=>!inscriptos.includes(a.id)).sort((a,b)=>fullName(a).localeCompare(fullName(b)));
+    const lleno = h.cupo!=null && inscriptos.length>=h.cupo;
+    const cupoCls = lleno ? 'b-red' : (inscriptos.length>0 ? 'b-green' : 'b-gray');
+    const cupoLabel = h.cupo!=null ? `${inscriptos.length}/${h.cupo}` : `${inscriptos.length} anotados`;
+    const chips = inscriptos.map(id=>{
+      const a=alumnos.find(x=>x.id===id);
+      const nombre = a?fullName(a):'(alumno eliminado)';
+      return `<span class="insc-chip">${nombre}<button onclick="quitarInscripto(${h.id},${id})" title="Sacar del turno">✕</button></span>`;
+    }).join('');
+    return`<div class="h-card">
+      <div class="h-card-top" onclick="toggleCard(this)">
+        <div class="h-card-hora">${h.hora||'—'}</div>
+        <div class="h-card-info">
+          <div class="h-card-name">${h.nombre||'Turno'}</div>
+          <div class="a-card-badges"><span class="badge ${cupoCls}">${cupoLabel}${lleno?' · Completo':''}</span></div>
+        </div>
+        <span class="chev">›</span>
+      </div>
+      <div class="h-card-detail"><div class="h-card-detail-inner">
+        <div class="insc-list">${chips || '<span class="insc-empty">Nadie anotado todavía</span>'}</div>
+        ${lleno ? '' : `<div class="insc-add">
+          <select class="filter-sel" id="add-insc-${h.id}">
+            <option value="">Agregar alumno...</option>
+            ${disponibles.map(a=>`<option value="${a.id}">${fullName(a)}</option>`).join('')}
+          </select>
+          <button class="btn btn-primary" onclick="agregarInscripto(${h.id})">+ Agregar</button>
+        </div>`}
+        <div class="h-card-detail-actions">
+          <button class="btn" onclick="openHorarioModal(${h.id})">✎ Editar</button>
+          <button class="btn btn-danger" onclick="deleteHorario(${h.id})">Eliminar</button>
+        </div>
+      </div></div>
+    </div>`;
+  }).join('');
+}
+
+let editHorarioId=null;
+function openHorarioModal(id=null){
+  editHorarioId=id;
+  document.getElementById('modal-horario-title').textContent = id?'Editar horario':'Nuevo horario';
+  if(id){
+    const h=horarios.find(x=>x.id===id);
+    document.getElementById('h-dia').value=h.dia;
+    document.getElementById('h-hora').value=h.hora||'';
+    document.getElementById('h-nombre').value=h.nombre||'';
+    document.getElementById('h-cupo').value=h.cupo!=null?h.cupo:'';
+  }else{
+    document.getElementById('h-dia').value=diaActual;
+    document.getElementById('h-hora').value='';
+    document.getElementById('h-nombre').value='';
+    document.getElementById('h-cupo').value='';
+  }
+  document.getElementById('overlay-horario').classList.add('open');
+}
+async function saveHorario(){
+  const dia=document.getElementById('h-dia').value;
+  const hora=document.getElementById('h-hora').value;
+  if(!hora){alert('Ingresá la hora');return;}
+  const nombre=document.getElementById('h-nombre').value.trim();
+  const cupoVal=document.getElementById('h-cupo').value;
+  const cupo = cupoVal===''?null:Number(cupoVal);
+  const btn=document.querySelector('#overlay-horario .btn-primary');
+  const originalText=btn.textContent; btn.disabled=true; btn.textContent='Guardando...';
+  try{
+    if(editHorarioId){
+      const saved=await dbUpdateHorario(editHorarioId, {dia,hora,nombre,cupo});
+      horarios=horarios.map(x=>x.id===editHorarioId?saved:x);
+    }else{
+      const saved=await dbInsertHorario({dia,hora,nombre,cupo,inscriptos:[]});
+      horarios.push(saved);
+    }
+    diaActual=dia;
+    closeModal('overlay-horario'); renderHorarios();
+    showToast(editHorarioId?'✅ Horario actualizado':'✅ Horario agregado','success');
+  }catch(e){ showToast('❌ Error al guardar. Revisá tu conexión.', 'error'); }
+  btn.disabled=false; btn.textContent=originalText;
+}
+async function deleteHorario(id){
+  const h=horarios.find(x=>x.id===id); if(!h)return;
+  if(!confirm(`¿Eliminar el turno de las ${h.hora} (${h.nombre||'sin nombre'})?`))return;
+  try{
+    await dbDeleteHorario(id);
+    horarios=horarios.filter(x=>x.id!==id);
+    renderHorarios();
+    showToast('✅ Horario eliminado','success');
+  }catch(e){ showToast('❌ Error al eliminar. Revisá tu conexión.', 'error'); }
+}
+async function agregarInscripto(hId){
+  const sel=document.getElementById('add-insc-'+hId);
+  const alumnoId=Number(sel.value);
+  if(!alumnoId)return;
+  const h=horarios.find(x=>x.id===hId);
+  const inscriptos=[...(h.inscriptos||[]), alumnoId];
+  try{
+    const saved=await dbUpdateHorario(hId, {inscriptos});
+    horarios=horarios.map(x=>x.id===hId?saved:x);
+    renderHorarios();
+    showToast('✅ Agregado al turno','success');
+  }catch(e){ showToast('❌ Error al anotar. Revisá tu conexión.', 'error'); }
+}
+async function quitarInscripto(hId, alumnoId){
+  const h=horarios.find(x=>x.id===hId);
+  const inscriptos=(h.inscriptos||[]).filter(id=>id!==alumnoId);
+  try{
+    const saved=await dbUpdateHorario(hId, {inscriptos});
+    horarios=horarios.map(x=>x.id===hId?saved:x);
+    renderHorarios();
+  }catch(e){ showToast('❌ Error al actualizar. Revisá tu conexión.', 'error'); }
 }
 
 // ── ESTADÍSTICAS DE INGRESOS ─────────────────────────────────────────────
@@ -1082,10 +1366,11 @@ function showToast(msg,type=''){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){['overlay-alumno','overlay-pago','overlay-tarifas','overlay-historial'].forEach(id=>closeModal(id));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){['overlay-alumno','overlay-pago','overlay-tarifas','overlay-historial','overlay-horario'].forEach(id=>closeModal(id));}});
 document.getElementById('today-badge').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+renderPlanOptions();
 (async function init(){
-  await Promise.all([load(), loadTarifas()]);
+  await Promise.all([load(), loadTarifas(), loadHorarios()]);
   renderAlumnos();
   const splash=document.getElementById('app-splash');
   splash.classList.add('hide');
