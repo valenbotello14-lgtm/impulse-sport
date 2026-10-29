@@ -12,7 +12,7 @@ create table if not exists alumnos (
   tel text not null default '',
   email text not null default '',
   medico text not null default '',
-  plan text not null default 'Salud Base',
+  plan text not null default 'Fuerza Base',
   tipo text not null default 'Mensual',
   monto text not null default '',
   venc text not null default '',
