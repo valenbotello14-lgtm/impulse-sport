@@ -557,8 +557,8 @@ function mesLabelCorto(k){if(!k)return'—';const[y,m]=k.split('-');return`${MES
 function addMonthKey(k,n){let[y,m]=k.split('-').map(Number);m+=n;y+=Math.floor((m-1)/12);m=((m-1)%12+12)%12+1;return`${y}-${String(m).padStart(2,'0')}`;}
 
 // ── DATA (SUPABASE) ─────────────────────────────────────────────────
-const SUPABASE_URL = 'https://czhkhmexmfoqijczaauf.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6aGtobWV4bWZvcWlqY3phYXVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NzI4ODgsImV4cCI6MjA5ODM0ODg4OH0.PKM93io5PhuzN-3xltGyE_kHMZQufEoe8furKxn93a4';
+const SUPABASE_URL = 'https://pkrhxqbdpliwugiqmbga.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrcmh4cWJkcGxpd3VnaXFtYmdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzMDQ0NDgsImV4cCI6MjEwODg4MDQ0OH0.z02X1RwS1j4D31ss5AYCoNdBGIzLKXekkUA4qWF3amc';
 
 let alumnos=[], nextId=1;
 
