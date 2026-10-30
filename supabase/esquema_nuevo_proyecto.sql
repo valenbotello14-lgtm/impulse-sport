@@ -49,6 +49,15 @@ create table if not exists horarios (
   created_at timestamptz not null default now()
 );
 
+create table if not exists campo_horarios (
+  id bigint generated always as identity primary key,
+  area text not null,           -- 'Inteligencia de Juego' | 'Velocidad'
+  dia text not null,            -- 'Lunes'..'Domingo'
+  hora text not null,           -- 'HH:MM'
+  nota text not null default '',
+  created_at timestamptz not null default now()
+);
+
 create table if not exists planes (
   id bigint generated always as identity primary key,
   area text not null,
@@ -72,6 +81,7 @@ create table if not exists gastos (
 alter table alumnos enable row level security;
 alter table tarifas enable row level security;
 alter table horarios enable row level security;
+alter table campo_horarios enable row level security;
 alter table planes enable row level security;
 alter table gastos enable row level security;
 
@@ -89,6 +99,12 @@ create policy "tarifas_anon_all" on tarifas
   with check (true);
 
 create policy "horarios_anon_all" on horarios
+  for all
+  to public
+  using (true)
+  with check (true);
+
+create policy "campo_horarios_anon_all" on campo_horarios
   for all
   to public
   using (true)
