@@ -180,6 +180,22 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 .month-cell .mc-people{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:var(--cyan2);}
 .month-cell .mc-dot{width:6px;height:6px;border-radius:50%;}
 .day-pills{display:flex;gap:6px;overflow-x:auto;}
+.campo-section{margin-top:28px;padding-top:20px;border-top:1px solid var(--border);}
+.campo-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+.campo-hint{font-size:11.5px;color:var(--text3);margin-bottom:14px;}
+.campo-areas{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.campo-area-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;}
+.campo-area-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-weight:600;font-size:13px;}
+.btn-sm{height:28px;padding:0 10px;font-size:11.5px;}
+.campo-list{display:flex;flex-direction:column;gap:6px;}
+.campo-row{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:8px 10px;font-size:12.5px;}
+.campo-row .campo-dia{font-weight:700;color:var(--cyan2);min-width:34px;}
+.campo-row .campo-hora{font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;}
+.campo-row .campo-nota{flex:1;min-width:0;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.campo-row .campo-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;}
+.campo-row .campo-del:hover{color:var(--red);}
+.campo-empty{font-size:12px;color:var(--text3);text-align:center;padding:14px 0;}
+@media(max-width:600px){.campo-areas{grid-template-columns:1fr;}}
 .day-pill{flex-shrink:0;height:36px;padding:0 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;}
 .day-pill:hover{border-color:var(--border2);color:var(--text);}
 .day-pill.active{background:var(--blue2);border-color:var(--blue2);color:#fff;}
@@ -431,6 +447,27 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
       <button class="btn btn-primary" onclick="openHorarioModal()">+ Nuevo horario</button>
     </div>
     <div class="card-list" id="tbody-horarios"></div>
+
+    <div class="campo-section">
+      <h3 class="campo-title">📋 Trabajo de campo</h3>
+      <p class="campo-hint">Turnos a campo abierto — solo referencia de día y horario, sin cupos ni inscriptos.</p>
+      <div class="campo-areas">
+        <div class="campo-area-card">
+          <div class="campo-area-head">
+            <span>🧠 Inteligencia de Juego</span>
+            <button class="btn btn-sm" onclick="openCampoModal('Inteligencia de Juego')">+ Agregar</button>
+          </div>
+          <div class="campo-list" id="campo-list-inteligencia"></div>
+        </div>
+        <div class="campo-area-card">
+          <div class="campo-area-head">
+            <span>⚡ Velocidad</span>
+            <button class="btn btn-sm" onclick="openCampoModal('Velocidad')">+ Agregar</button>
+          </div>
+          <div class="campo-list" id="campo-list-velocidad"></div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- ── BALANCE ── -->
@@ -608,6 +645,32 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('overlay-horario')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveHorario()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TURNO DE CAMPO (Inteligencia de Juego / Velocidad) -->
+<div class="overlay" id="overlay-campo" onclick="handleOvClick(event,'overlay-campo')">
+  <div class="modal">
+    <h3><span>📋</span> <span id="modal-campo-title">Nuevo turno de campo</span></h3>
+    <div class="form-row">
+      <div class="form-group"><label>Día</label>
+        <select id="c-dia">
+          <option value="Lunes">Lunes</option>
+          <option value="Martes">Martes</option>
+          <option value="Miércoles">Miércoles</option>
+          <option value="Jueves">Jueves</option>
+          <option value="Viernes">Viernes</option>
+          <option value="Sábado">Sábado</option>
+          <option value="Domingo">Domingo</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Hora</label><input type="time" id="c-hora"></div>
+    </div>
+    <div class="form-group"><label>Nota (opcional)</label><input type="text" id="c-nota" placeholder="Ej: Cancha municipal..."></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('overlay-campo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCampoTurno()">Guardar</button>
     </div>
   </div>
 </div>
@@ -907,6 +970,31 @@ async function dbUpdateHorario(id, patch){
 async function dbDeleteHorario(id){
   const resp = await fetch(`${SUPABASE_URL}/rest/v1/horarios?id=eq.${id}`, { method:'DELETE', headers: dbHeaders() });
   if(!resp.ok) throw new Error('Error al eliminar el horario');
+}
+
+// ── DATA (SUPABASE) — CAMPO (turnos de referencia a campo abierto) ──
+let campoHorarios=[];
+async function loadCampoHorarios(){
+  try{
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/campo_horarios?select=*&order=hora.asc`, { headers: dbHeaders() });
+    if(!resp.ok) throw new Error('Error de conexión a la base de datos');
+    campoHorarios = await resp.json();
+    try{localStorage.setItem('impulse_campo_horarios_cache', JSON.stringify(campoHorarios));}catch(e){}
+  }catch(e){
+    try{const c=localStorage.getItem('impulse_campo_horarios_cache'); campoHorarios = c ? JSON.parse(c) : [];}catch(e2){campoHorarios=[];}
+  }
+}
+async function dbInsertCampoTurno(c){
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/campo_horarios`, {
+    method:'POST', headers: dbHeaders({'Prefer':'return=representation'}), body: JSON.stringify(c)
+  });
+  if(!resp.ok) throw new Error('Error al guardar el turno de campo');
+  const data = await resp.json();
+  return data[0];
+}
+async function dbDeleteCampoTurno(id){
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/campo_horarios?id=eq.${id}`, { method:'DELETE', headers: dbHeaders() });
+  if(!resp.ok) throw new Error('Error al eliminar el turno de campo');
 }
 
 // ── DATA (SUPABASE) — GASTOS (Balance) ───────────────────────────────
@@ -1555,6 +1643,7 @@ function renderMesHorarios(){
 
 function renderHorarios(){
   renderWeekGrid();
+  renderCampoHorarios();
   document.querySelectorAll('.day-pill').forEach(p=>p.classList.toggle('active', p.dataset.dia===diaActual));
   const list = horarios.filter(h=>h.dia===diaActual).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
   const tb = document.getElementById('tbody-horarios');
@@ -1646,6 +1735,56 @@ async function deleteHorario(id){
     horarios=horarios.filter(x=>x.id!==id);
     renderHorarios();
     showToast('✅ Horario eliminado','success');
+  }catch(e){ showToast('❌ Error al eliminar. Revisá tu conexión.', 'error'); }
+}
+
+// ── TRABAJO DE CAMPO (turnos de referencia, sin cupo ni inscriptos) ──
+const CAMPO_SLUG = {'Inteligencia de Juego':'inteligencia','Velocidad':'velocidad'};
+function renderCampoHorarios(){
+  Object.entries(CAMPO_SLUG).forEach(([area,slug])=>{
+    const list = campoHorarios.filter(c=>c.area===area)
+      .sort((a,b)=> DIAS.indexOf(a.dia)-DIAS.indexOf(b.dia) || (a.hora||'').localeCompare(b.hora||''));
+    const el = document.getElementById('campo-list-'+slug);
+    if(!list.length){ el.innerHTML = `<div class="campo-empty">Sin turnos cargados</div>`; return; }
+    el.innerHTML = list.map(c=>`<div class="campo-row">
+      <span class="campo-dia">${c.dia.slice(0,3)}</span>
+      <span class="campo-hora">${c.hora||'—'}</span>
+      <span class="campo-nota">${c.nota||''}</span>
+      <button class="campo-del" onclick="deleteCampoTurno(${c.id})" title="Eliminar">✕</button>
+    </div>`).join('');
+  });
+}
+let campoAreaTarget=null;
+function openCampoModal(area){
+  campoAreaTarget=area;
+  document.getElementById('modal-campo-title').textContent = `Nuevo turno — ${area}`;
+  document.getElementById('c-dia').value=diaActual;
+  document.getElementById('c-hora').value='';
+  document.getElementById('c-nota').value='';
+  document.getElementById('overlay-campo').classList.add('open');
+}
+async function saveCampoTurno(){
+  const dia=document.getElementById('c-dia').value;
+  const hora=document.getElementById('c-hora').value;
+  if(!hora){alert('Ingresá la hora');return;}
+  const nota=document.getElementById('c-nota').value.trim();
+  const btn=document.querySelector('#overlay-campo .btn-primary');
+  const originalText=btn.textContent; btn.disabled=true; btn.textContent='Guardando...';
+  try{
+    const saved=await dbInsertCampoTurno({area:campoAreaTarget,dia,hora,nota});
+    campoHorarios.push(saved);
+    closeModal('overlay-campo'); renderCampoHorarios();
+    showToast('✅ Turno agregado','success');
+  }catch(e){ showToast('❌ Error al guardar. Revisá tu conexión.', 'error'); }
+  btn.disabled=false; btn.textContent=originalText;
+}
+async function deleteCampoTurno(id){
+  if(!confirm('¿Eliminar este turno de campo?'))return;
+  try{
+    await dbDeleteCampoTurno(id);
+    campoHorarios=campoHorarios.filter(x=>x.id!==id);
+    renderCampoHorarios();
+    showToast('✅ Turno eliminado','success');
   }catch(e){ showToast('❌ Error al eliminar. Revisá tu conexión.', 'error'); }
 }
 async function agregarInscripto(hId){
@@ -1849,10 +1988,10 @@ function showToast(msg,type=''){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){['overlay-alumno','overlay-pago','overlay-tarifas','overlay-plan','overlay-historial','overlay-horario','overlay-gasto','overlay-mes-horarios'].forEach(id=>closeModal(id));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){['overlay-alumno','overlay-pago','overlay-tarifas','overlay-plan','overlay-historial','overlay-horario','overlay-gasto','overlay-mes-horarios','overlay-campo'].forEach(id=>closeModal(id));}});
 document.getElementById('today-badge').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 (async function init(){
-  await Promise.all([load(), loadTarifas(), loadHorarios(), loadPlanes(), loadGastos()]);
+  await Promise.all([load(), loadTarifas(), loadHorarios(), loadCampoHorarios(), loadPlanes(), loadGastos()]);
   renderPlanOptions();
   renderAlumnos();
   const splash=document.getElementById('app-splash');
