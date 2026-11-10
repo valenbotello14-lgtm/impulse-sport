@@ -209,7 +209,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 .insc-chip button{width:16px;height:16px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;line-height:1;padding:0;flex-shrink:0;}
 .insc-chip button:hover{background:var(--red);color:#fff;}
 .insc-add{display:flex;gap:8px;}
-.insc-add select{flex:1;}
+.combo-wrap{position:relative;flex:1;min-width:0;}
+.combo-input{padding:0 10px;height:36px;width:100%;}
+.combo-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:220px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);z-index:50;}
+.combo-dropdown.open{display:block;}
+.combo-item{padding:9px 12px;font-size:12.5px;cursor:pointer;}
+.combo-item:hover,.combo-item:active{background:var(--bg3);}
+.combo-empty{padding:9px 12px;font-size:12px;color:var(--text3);}
 .h-card-detail-actions{display:flex;gap:8px;}
 
 /* MODAL */
@@ -1677,7 +1683,6 @@ function renderHorarios(){
   if(!list.length){ tb.innerHTML = `<div class="empty"><div class="empty-icon">🗓️</div>No hay horarios cargados para ${diaActual}</div>`; return; }
   tb.innerHTML = list.map(h=>{
     const inscriptos = h.inscriptos||[];
-    const disponibles = alumnos.filter(a=>!inscriptos.includes(a.id)).sort((a,b)=>fullName(a).localeCompare(fullName(b)));
     const lleno = h.cupo!=null && inscriptos.length>=h.cupo;
     const cupoCls = lleno ? 'b-red' : (inscriptos.length>0 ? 'b-green' : 'b-gray');
     const cupoLabel = h.cupo!=null ? `${inscriptos.length}/${h.cupo}` : `${inscriptos.length} anotados`;
@@ -1694,11 +1699,10 @@ function renderHorarios(){
       <div class="h-card-detail"><div class="h-card-detail-inner">
         <div class="insc-list">${chips || '<span class="insc-empty">Nadie anotado todavía</span>'}</div>
         ${lleno ? '' : `<div class="insc-add">
-          <select class="filter-sel" id="add-insc-${h.id}">
-            <option value="">Agregar alumno...</option>
-            ${disponibles.map(a=>`<option value="${a.id}">${fullName(a)}</option>`).join('')}
-          </select>
-          <button class="btn btn-primary" onclick="agregarInscripto(${h.id})">+ Agregar</button>
+          <div class="combo-wrap">
+            <input type="text" class="combo-input" id="add-insc-${h.id}" placeholder="Buscar alumno..." autocomplete="off" oninput="comboFiltrar('horario',${h.id})" onfocus="comboFiltrar('horario',${h.id})" onblur="comboCerrarDelay('horario',${h.id})">
+            <div class="combo-dropdown" id="combo-dd-horario-${h.id}"></div>
+          </div>
         </div>`}
         <div class="h-card-detail-actions">
           <button class="btn" onclick="openHorarioModal(${h.id})">✎ Editar</button>
@@ -1771,7 +1775,6 @@ function renderCampoHorarios(){
     if(!list.length){ el.innerHTML = `<div class="campo-empty">Sin turnos cargados</div>`; return; }
     el.innerHTML = list.map(c=>{
       const inscriptos = c.inscriptos||[];
-      const disponibles = alumnos.filter(a=>!inscriptos.includes(a.id)).sort((a,b)=>fullName(a).localeCompare(fullName(b)));
       const lleno = c.cupo!=null && inscriptos.length>=c.cupo;
       const cupoCls = lleno ? 'b-red' : (inscriptos.length>0 ? 'b-green' : 'b-gray');
       const cupoLabel = c.cupo!=null ? `${inscriptos.length}/${c.cupo}` : `${inscriptos.length} anotados`;
@@ -1788,11 +1791,10 @@ function renderCampoHorarios(){
         <div class="h-card-detail"><div class="h-card-detail-inner">
           <div class="insc-list">${chips || '<span class="insc-empty">Nadie anotado todavía</span>'}</div>
           ${lleno ? '' : `<div class="insc-add">
-            <select class="filter-sel" id="add-insc-campo-${c.id}">
-              <option value="">Agregar alumno...</option>
-              ${disponibles.map(a=>`<option value="${a.id}">${fullName(a)}</option>`).join('')}
-            </select>
-            <button class="btn btn-primary" onclick="agregarInscriptoCampo(${c.id})">+ Agregar</button>
+            <div class="combo-wrap">
+              <input type="text" class="combo-input" id="add-insc-campo-${c.id}" placeholder="Buscar alumno..." autocomplete="off" oninput="comboFiltrar('campo',${c.id})" onfocus="comboFiltrar('campo',${c.id})" onblur="comboCerrarDelay('campo',${c.id})">
+              <div class="combo-dropdown" id="combo-dd-campo-${c.id}"></div>
+            </div>
           </div>`}
           <div class="h-card-detail-actions">
             <button class="btn" onclick="openCampoModal('${area}',${c.id})">✎ Editar</button>
@@ -1853,10 +1855,7 @@ async function deleteCampoTurno(id){
     showToast('✅ Turno eliminado','success');
   }catch(e){ showToast('❌ Error al eliminar. Revisá tu conexión.', 'error'); }
 }
-async function agregarInscriptoCampo(cId){
-  const sel=document.getElementById('add-insc-campo-'+cId);
-  const alumnoId=Number(sel.value);
-  if(!alumnoId)return;
+async function agregarInscriptoCampo(cId, alumnoId){
   const c=campoHorarios.find(x=>x.id===cId);
   const inscriptos=[...(c.inscriptos||[]), alumnoId];
   try{
@@ -1922,10 +1921,7 @@ async function confirmarDuplicarAlumno(){
   }catch(e){ showToast('❌ Error al anotar. Revisá tu conexión.', 'error'); }
   btn.disabled=false; btn.textContent=originalText;
 }
-async function agregarInscripto(hId){
-  const sel=document.getElementById('add-insc-'+hId);
-  const alumnoId=Number(sel.value);
-  if(!alumnoId)return;
+async function agregarInscripto(hId, alumnoId){
   const h=horarios.find(x=>x.id===hId);
   const inscriptos=[...(h.inscriptos||[]), alumnoId];
   try{
@@ -1943,6 +1939,36 @@ async function quitarInscripto(hId, alumnoId){
     horarios=horarios.map(x=>x.id===hId?saved:x);
     renderHorarios();
   }catch(e){ showToast('❌ Error al actualizar. Revisá tu conexión.', 'error'); }
+}
+
+// ── BUSCADOR DE ALUMNOS PARA ANOTAR EN UN TURNO (gimnasio o campo) ───
+function comboFiltrar(tipo, turnoId){
+  const inputId = tipo==='horario' ? `add-insc-${turnoId}` : `add-insc-campo-${turnoId}`;
+  const ddId = `combo-dd-${tipo}-${turnoId}`;
+  const input = document.getElementById(inputId);
+  const dd = document.getElementById(ddId);
+  if(!input || !dd) return;
+  const turno = tipo==='horario' ? horarios.find(x=>x.id===turnoId) : campoHorarios.find(x=>x.id===turnoId);
+  if(!turno) return;
+  const inscriptos = turno.inscriptos||[];
+  const q = input.value.trim().toLowerCase();
+  let disponibles = alumnos.filter(a=>!inscriptos.includes(a.id));
+  if(q) disponibles = disponibles.filter(a=>fullName(a).toLowerCase().includes(q));
+  disponibles.sort((a,b)=>fullName(a).localeCompare(fullName(b)));
+  dd.innerHTML = disponibles.length
+    ? disponibles.slice(0,30).map(a=>`<div class="combo-item" onmousedown="event.preventDefault();comboSeleccionar('${tipo}',${turnoId},${a.id})">${fullName(a)}</div>`).join('')
+    : `<div class="combo-empty">Sin resultados</div>`;
+  dd.classList.add('open');
+}
+function comboCerrarDelay(tipo, turnoId){
+  setTimeout(()=>{
+    const dd = document.getElementById(`combo-dd-${tipo}-${turnoId}`);
+    if(dd) dd.classList.remove('open');
+  }, 150);
+}
+function comboSeleccionar(tipo, turnoId, alumnoId){
+  if(tipo==='horario') agregarInscripto(turnoId, alumnoId);
+  else agregarInscriptoCampo(turnoId, alumnoId);
 }
 
 // ── ESTADÍSTICAS DE INGRESOS ─────────────────────────────────────────────
