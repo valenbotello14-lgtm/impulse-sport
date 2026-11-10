@@ -189,6 +189,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 .btn-sm{height:28px;padding:0 10px;font-size:11.5px;}
 .campo-list{display:flex;flex-direction:column;gap:10px;}
 .campo-empty{font-size:12px;color:var(--text3);text-align:center;padding:14px 0;}
+.disp-day{margin-bottom:16px;}
+.disp-day:last-child{margin-bottom:0;}
+.disp-day-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;margin-bottom:8px;color:var(--cyan2);}
+.disp-empty{font-size:12px;color:var(--text3);padding:2px 0 10px;}
+.disp-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--border);border-radius:9px;background:var(--bg);margin-bottom:6px;}
+.disp-hora{font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--cyan2);min-width:48px;font-variant-numeric:tabular-nums;font-size:12.5px;}
+.disp-info{flex:1;min-width:0;font-size:12.5px;}
+.disp-tipo{color:var(--text3);font-size:11px;}
 @media(max-width:600px){.campo-areas{grid-template-columns:1fr;}}
 .day-pill{flex-shrink:0;height:36px;padding:0 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;}
 .day-pill:hover{border-color:var(--border2);color:var(--text);}
@@ -213,9 +221,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 .combo-input{padding:0 10px;height:36px;width:100%;}
 .combo-dropdown{display:none;margin-top:6px;max-height:220px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border);border-radius:10px;}
 .combo-dropdown.open{display:block;}
-.combo-item{padding:9px 12px;font-size:12.5px;cursor:pointer;}
+.combo-item{padding:9px 12px;font-size:12.5px;cursor:pointer;display:flex;align-items:center;gap:8px;}
 .combo-item:hover,.combo-item:active{background:var(--bg3);}
+.combo-item.selected{background:rgba(0,200,240,.12);color:var(--cyan2);}
+.combo-check{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:4px;border:1px solid var(--border2);font-size:10px;flex-shrink:0;}
+.combo-item.selected .combo-check{background:var(--cyan2);border-color:var(--cyan2);color:#04111f;}
 .combo-empty{padding:9px 12px;font-size:12px;color:var(--text3);}
+.combo-footer .btn{width:100%;justify-content:center;margin-top:6px;}
 .h-card-detail-actions{display:flex;gap:8px;}
 
 /* MODAL */
@@ -443,6 +455,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
         <button class="day-pill" data-dia="Sábado" onclick="cambiarDia('Sábado')">Sáb</button>
         <button class="day-pill" data-dia="Domingo" onclick="cambiarDia('Domingo')">Dom</button>
       </div>
+      <button class="btn" onclick="openDisponibilidad()">📋 Disponibilidad</button>
       <button class="btn" onclick="openMesHorarios()">📅 Ver mes</button>
       <button class="btn btn-primary" onclick="openHorarioModal()">+ Nuevo horario</button>
     </div>
@@ -641,7 +654,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
       <div class="form-group"><label>Hora</label><input type="time" id="h-hora"></div>
     </div>
     <div class="form-group"><label>Nombre de la clase / turno</label><input type="text" id="h-nombre" placeholder="Ej: Funcional, Spinning..."></div>
-    <div class="form-group"><label>Cupo máximo (dejar vacío = sin límite)</label><input type="number" id="h-cupo" placeholder="15"></div>
+    <div class="form-group"><label>Cupo máximo (dejar vacío = sin límite)</label><input type="number" id="h-cupo" placeholder="8"></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('overlay-horario')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveHorario()">Guardar</button>
@@ -667,7 +680,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
       </div>
       <div class="form-group"><label>Hora</label><input type="time" id="c-hora"></div>
     </div>
-    <div class="form-group"><label>Cupo máximo (dejar vacío = sin límite)</label><input type="number" id="c-cupo" placeholder="15"></div>
+    <div class="form-group"><label>Cupo máximo (dejar vacío = sin límite)</label><input type="number" id="c-cupo" placeholder="8"></div>
     <div class="form-group"><label>Nota (opcional)</label><input type="text" id="c-nota" placeholder="Ej: Cancha municipal..."></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('overlay-campo')">Cancelar</button>
@@ -687,6 +700,18 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('overlay-dup-alumno')">Cancelar</button>
       <button class="btn btn-primary" onclick="confirmarDuplicarAlumno()">Anotar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DISPONIBILIDAD DE CUPOS (lunes a sábado) -->
+<div class="overlay" id="overlay-disponibilidad" onclick="handleOvClick(event,'overlay-disponibilidad')">
+  <div class="modal" style="max-width:560px">
+    <h3><span>📋</span> Disponibilidad de cupos</h3>
+    <p style="font-size:11.5px;color:var(--text3);margin:0 0 14px;">Lunes a sábado — gimnasio y trabajo de campo, con los cupos libres de cada turno.</p>
+    <div id="disponibilidad-body" style="max-height:60vh;overflow-y:auto;"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('overlay-disponibilidad')">Cerrar</button>
     </div>
   </div>
 </div>
@@ -1636,6 +1661,41 @@ function renderWeekGrid(){
 
 // Vista por mes: mismo patrón semanal repetido día por día del mes (los horarios son fijos por día de semana).
 let mesHorariosActual = mesActualKey();
+// ── DISPONIBILIDAD DE CUPOS (lunes a sábado, gimnasio + trabajo de campo) ──
+function openDisponibilidad(){
+  renderDisponibilidad();
+  document.getElementById('overlay-disponibilidad').classList.add('open');
+}
+function renderDisponibilidad(){
+  const diasLaborales = DIAS.filter(d=>d!=='Domingo');
+  const html = diasLaborales.map(d=>{
+    const turnosGym = horarios.filter(h=>h.dia===d).map(h=>({hora:h.hora, cupo:h.cupo, inscriptos:h.inscriptos||[], label:h.nombre||'Turno', tipo:'Gimnasio'}));
+    const turnosCampo = campoHorarios.filter(c=>c.dia===d).map(c=>({hora:c.hora, cupo:c.cupo, inscriptos:c.inscriptos||[], label:c.nota||'Turno', tipo:c.area}));
+    const todos = [...turnosGym, ...turnosCampo].sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
+    let filas;
+    if(!todos.length){
+      filas = `<div class="disp-empty">Sin turnos</div>`;
+    }else{
+      filas = todos.map(t=>{
+        const n = t.inscriptos.length;
+        let cls, label;
+        if(t.cupo==null){ cls='b-blue'; label='Sin límite'; }
+        else{
+          const libres = Math.max(0, t.cupo-n);
+          if(libres<=0){ cls='b-red'; label='Completo'; }
+          else{ cls='b-green'; label=`${libres} libre${libres===1?'':'s'}`; }
+        }
+        return `<div class="disp-row">
+          <span class="disp-hora">${t.hora||'—'}</span>
+          <span class="disp-info">${t.label} <span class="disp-tipo">· ${t.tipo}</span></span>
+          <span class="badge ${cls}">${label}</span>
+        </div>`;
+      }).join('');
+    }
+    return `<div class="disp-day"><div class="disp-day-title">${d}</div>${filas}</div>`;
+  }).join('');
+  document.getElementById('disponibilidad-body').innerHTML = html;
+}
 function openMesHorarios(){
   mesHorariosActual = mesActualKey();
   renderMesHorarios();
@@ -1702,6 +1762,7 @@ function renderHorarios(){
           <div class="combo-wrap">
             <input type="text" class="combo-input" id="add-insc-${h.id}" placeholder="Buscar alumno..." autocomplete="off" oninput="comboFiltrar('horario',${h.id})" onfocus="comboFiltrar('horario',${h.id})" onblur="comboCerrarDelay('horario',${h.id})">
             <div class="combo-dropdown" id="combo-dd-horario-${h.id}"></div>
+            <div class="combo-footer" id="combo-footer-horario-${h.id}"></div>
           </div>
         </div>`}
         <div class="h-card-detail-actions">
@@ -1794,6 +1855,7 @@ function renderCampoHorarios(){
             <div class="combo-wrap">
               <input type="text" class="combo-input" id="add-insc-campo-${c.id}" placeholder="Buscar alumno..." autocomplete="off" oninput="comboFiltrar('campo',${c.id})" onfocus="comboFiltrar('campo',${c.id})" onblur="comboCerrarDelay('campo',${c.id})">
               <div class="combo-dropdown" id="combo-dd-campo-${c.id}"></div>
+              <div class="combo-footer" id="combo-footer-campo-${c.id}"></div>
             </div>
           </div>`}
           <div class="h-card-detail-actions">
@@ -1855,16 +1917,6 @@ async function deleteCampoTurno(id){
     showToast('✅ Turno eliminado','success');
   }catch(e){ showToast('❌ Error al eliminar. Revisá tu conexión.', 'error'); }
 }
-async function agregarInscriptoCampo(cId, alumnoId){
-  const c=campoHorarios.find(x=>x.id===cId);
-  const inscriptos=[...(c.inscriptos||[]), alumnoId];
-  try{
-    const saved=await dbUpdateCampoTurno(cId, {inscriptos});
-    campoHorarios=campoHorarios.map(x=>x.id===cId?saved:x);
-    renderCampoHorarios();
-    showToast('✅ Agregado al turno','success');
-  }catch(e){ showToast('❌ Error al anotar. Revisá tu conexión.', 'error'); }
-}
 async function quitarInscriptoCampo(cId, alumnoId){
   const c=campoHorarios.find(x=>x.id===cId);
   const inscriptos=(c.inscriptos||[]).filter(id=>id!==alumnoId);
@@ -1921,16 +1973,6 @@ async function confirmarDuplicarAlumno(){
   }catch(e){ showToast('❌ Error al anotar. Revisá tu conexión.', 'error'); }
   btn.disabled=false; btn.textContent=originalText;
 }
-async function agregarInscripto(hId, alumnoId){
-  const h=horarios.find(x=>x.id===hId);
-  const inscriptos=[...(h.inscriptos||[]), alumnoId];
-  try{
-    const saved=await dbUpdateHorario(hId, {inscriptos});
-    horarios=horarios.map(x=>x.id===hId?saved:x);
-    renderHorarios();
-    showToast('✅ Agregado al turno','success');
-  }catch(e){ showToast('❌ Error al anotar. Revisá tu conexión.', 'error'); }
-}
 async function quitarInscripto(hId, alumnoId){
   const h=horarios.find(x=>x.id===hId);
   const inscriptos=(h.inscriptos||[]).filter(id=>id!==alumnoId);
@@ -1942,6 +1984,8 @@ async function quitarInscripto(hId, alumnoId){
 }
 
 // ── BUSCADOR DE ALUMNOS PARA ANOTAR EN UN TURNO (gimnasio o campo) ───
+// Permite tildar varios a la vez y agregarlos todos juntos con un solo toque.
+let comboSeleccionados={};
 function comboFiltrar(tipo, turnoId){
   const inputId = tipo==='horario' ? `add-insc-${turnoId}` : `add-insc-campo-${turnoId}`;
   const ddId = `combo-dd-${tipo}-${turnoId}`;
@@ -1951,14 +1995,44 @@ function comboFiltrar(tipo, turnoId){
   const turno = tipo==='horario' ? horarios.find(x=>x.id===turnoId) : campoHorarios.find(x=>x.id===turnoId);
   if(!turno) return;
   const inscriptos = turno.inscriptos||[];
+  const key = `${tipo}:${turnoId}`;
+  const seleccionados = comboSeleccionados[key]||[];
   const q = input.value.trim().toLowerCase();
   let disponibles = alumnos.filter(a=>!inscriptos.includes(a.id));
   if(q) disponibles = disponibles.filter(a=>fullName(a).toLowerCase().includes(q));
   disponibles.sort((a,b)=>fullName(a).localeCompare(fullName(b)));
   dd.innerHTML = disponibles.length
-    ? disponibles.slice(0,30).map(a=>`<div class="combo-item" onmousedown="event.preventDefault();comboSeleccionar('${tipo}',${turnoId},${a.id})">${fullName(a)}</div>`).join('')
+    ? disponibles.slice(0,30).map(a=>{
+        const marcado = seleccionados.includes(a.id);
+        return `<div class="combo-item${marcado?' selected':''}" onmousedown="event.preventDefault();comboToggleSeleccion('${tipo}',${turnoId},${a.id})"><span class="combo-check">${marcado?'✓':''}</span>${fullName(a)}</div>`;
+      }).join('')
     : `<div class="combo-empty">Sin resultados</div>`;
   dd.classList.add('open');
+  comboActualizarFooter(tipo, turnoId);
+}
+function comboActualizarFooter(tipo, turnoId){
+  const foot = document.getElementById(`combo-footer-${tipo}-${turnoId}`);
+  if(!foot) return;
+  const n = (comboSeleccionados[`${tipo}:${turnoId}`]||[]).length;
+  foot.innerHTML = n ? `<button class="btn btn-primary" onmousedown="event.preventDefault();comboAgregarSeleccionados('${tipo}',${turnoId})">+ Agregar (${n})</button>` : '';
+}
+function comboToggleSeleccion(tipo, turnoId, alumnoId){
+  const turno = tipo==='horario' ? horarios.find(x=>x.id===turnoId) : campoHorarios.find(x=>x.id===turnoId);
+  if(!turno) return;
+  const key = `${tipo}:${turnoId}`;
+  const set = new Set(comboSeleccionados[key]||[]);
+  if(set.has(alumnoId)){
+    set.delete(alumnoId);
+  }else{
+    const ocupados = (turno.inscriptos||[]).length;
+    if(turno.cupo!=null && ocupados+set.size>=turno.cupo){
+      showToast('❌ No queda cupo disponible','error');
+      return;
+    }
+    set.add(alumnoId);
+  }
+  comboSeleccionados[key] = [...set];
+  comboFiltrar(tipo, turnoId);
 }
 function comboCerrarDelay(tipo, turnoId){
   setTimeout(()=>{
@@ -1966,9 +2040,27 @@ function comboCerrarDelay(tipo, turnoId){
     if(dd) dd.classList.remove('open');
   }, 150);
 }
-function comboSeleccionar(tipo, turnoId, alumnoId){
-  if(tipo==='horario') agregarInscripto(turnoId, alumnoId);
-  else agregarInscriptoCampo(turnoId, alumnoId);
+async function comboAgregarSeleccionados(tipo, turnoId){
+  const key = `${tipo}:${turnoId}`;
+  const ids = comboSeleccionados[key]||[];
+  if(!ids.length) return;
+  delete comboSeleccionados[key];
+  try{
+    if(tipo==='horario'){
+      const h=horarios.find(x=>x.id===turnoId);
+      const inscriptos=[...new Set([...(h.inscriptos||[]), ...ids])];
+      const saved=await dbUpdateHorario(turnoId, {inscriptos});
+      horarios=horarios.map(x=>x.id===turnoId?saved:x);
+      renderHorarios();
+    }else{
+      const c=campoHorarios.find(x=>x.id===turnoId);
+      const inscriptos=[...new Set([...(c.inscriptos||[]), ...ids])];
+      const saved=await dbUpdateCampoTurno(turnoId, {inscriptos});
+      campoHorarios=campoHorarios.map(x=>x.id===turnoId?saved:x);
+      renderCampoHorarios();
+    }
+    showToast(ids.length===1?'✅ Agregado al turno':`✅ ${ids.length} alumnos agregados al turno`,'success');
+  }catch(e){ showToast('❌ Error al anotar. Revisá tu conexión.', 'error'); }
 }
 
 // ── ESTADÍSTICAS DE INGRESOS ─────────────────────────────────────────────
@@ -2149,7 +2241,7 @@ function showToast(msg,type=''){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){['overlay-alumno','overlay-pago','overlay-tarifas','overlay-plan','overlay-historial','overlay-horario','overlay-gasto','overlay-mes-horarios','overlay-campo','overlay-dup-alumno'].forEach(id=>closeModal(id));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){['overlay-alumno','overlay-pago','overlay-tarifas','overlay-plan','overlay-historial','overlay-horario','overlay-gasto','overlay-mes-horarios','overlay-campo','overlay-dup-alumno','overlay-disponibilidad'].forEach(id=>closeModal(id));}});
 document.getElementById('today-badge').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 (async function init(){
   await Promise.all([load(), loadTarifas(), loadHorarios(), loadCampoHorarios(), loadPlanes(), loadGastos()]);
