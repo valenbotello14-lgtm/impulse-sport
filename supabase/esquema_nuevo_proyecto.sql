@@ -55,6 +55,8 @@ create table if not exists campo_horarios (
   dia text not null,            -- 'Lunes'..'Domingo'
   hora text not null,           -- 'HH:MM'
   nota text not null default '',
+  cupo integer,                 -- null = sin límite
+  inscriptos jsonb not null default '[]'::jsonb,  -- array de ids de alumnos
   created_at timestamptz not null default now()
 );
 

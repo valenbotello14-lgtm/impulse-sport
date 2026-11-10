@@ -187,13 +187,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 .campo-area-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px;}
 .campo-area-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-weight:600;font-size:13px;}
 .btn-sm{height:28px;padding:0 10px;font-size:11.5px;}
-.campo-list{display:flex;flex-direction:column;gap:6px;}
-.campo-row{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:8px 10px;font-size:12.5px;}
-.campo-row .campo-dia{font-weight:700;color:var(--cyan2);min-width:34px;}
-.campo-row .campo-hora{font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;}
-.campo-row .campo-nota{flex:1;min-width:0;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.campo-row .campo-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;}
-.campo-row .campo-del:hover{color:var(--red);}
+.campo-list{display:flex;flex-direction:column;gap:10px;}
 .campo-empty{font-size:12px;color:var(--text3);text-align:center;padding:14px 0;}
 @media(max-width:600px){.campo-areas{grid-template-columns:1fr;}}
 .day-pill{flex-shrink:0;height:36px;padding:0 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;}
@@ -450,7 +444,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 
     <div class="campo-section">
       <h3 class="campo-title">📋 Trabajo de campo</h3>
-      <p class="campo-hint">Turnos a campo abierto — solo referencia de día y horario, sin cupos ni inscriptos.</p>
+      <p class="campo-hint">Turnos a campo abierto, con cupo e inscriptos igual que los horarios de gimnasio.</p>
       <div class="campo-areas">
         <div class="campo-area-card">
           <div class="campo-area-head">
@@ -667,10 +661,26 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
       </div>
       <div class="form-group"><label>Hora</label><input type="time" id="c-hora"></div>
     </div>
+    <div class="form-group"><label>Cupo máximo (dejar vacío = sin límite)</label><input type="number" id="c-cupo" placeholder="15"></div>
     <div class="form-group"><label>Nota (opcional)</label><input type="text" id="c-nota" placeholder="Ej: Cancha municipal..."></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('overlay-campo')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveCampoTurno()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ANOTAR ALUMNO TAMBIÉN EN OTRO TURNO -->
+<div class="overlay" id="overlay-dup-alumno" onclick="handleOvClick(event,'overlay-dup-alumno')">
+  <div class="modal">
+    <h3><span>⎘</span> Anotar también en otro turno</h3>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:14px;">Anotá a <strong id="dup-alumno-nombre"></strong> en otro turno sin sacarlo del actual.</p>
+    <div class="form-group"><label>Turno</label>
+      <select id="dup-turno"></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('overlay-dup-alumno')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarDuplicarAlumno()">Anotar</button>
     </div>
   </div>
 </div>
@@ -989,6 +999,14 @@ async function dbInsertCampoTurno(c){
     method:'POST', headers: dbHeaders({'Prefer':'return=representation'}), body: JSON.stringify(c)
   });
   if(!resp.ok) throw new Error('Error al guardar el turno de campo');
+  const data = await resp.json();
+  return data[0];
+}
+async function dbUpdateCampoTurno(id, patch){
+  const resp = await fetch(`${SUPABASE_URL}/rest/v1/campo_horarios?id=eq.${id}`, {
+    method:'PATCH', headers: dbHeaders({'Prefer':'return=representation'}), body: JSON.stringify(patch)
+  });
+  if(!resp.ok) throw new Error('Error al actualizar el turno de campo');
   const data = await resp.json();
   return data[0];
 }
@@ -1641,6 +1659,15 @@ function renderMesHorarios(){
   document.getElementById('month-grid').innerHTML = cells;
 }
 
+// Chip de alumno anotado — reutilizado por los turnos de gimnasio y los de trabajo de campo.
+// "⎘" lo anota también en otro turno (sin sacarlo del actual); "✕" lo saca de este.
+function renderInscChip(alumnoId, tipo, turnoId){
+  const a=alumnos.find(x=>x.id===alumnoId);
+  const nombre = a?fullName(a):'(alumno eliminado)';
+  const quitarFn = tipo==='horario' ? `quitarInscripto(${turnoId},${alumnoId})` : `quitarInscriptoCampo(${turnoId},${alumnoId})`;
+  return `<span class="insc-chip">${nombre}<button onclick="abrirDuplicarAlumno('${tipo}',${turnoId},${alumnoId})" title="Anotar también en otro turno">⎘</button><button onclick="${quitarFn}" title="Sacar del turno">✕</button></span>`;
+}
+
 function renderHorarios(){
   renderWeekGrid();
   renderCampoHorarios();
@@ -1654,11 +1681,7 @@ function renderHorarios(){
     const lleno = h.cupo!=null && inscriptos.length>=h.cupo;
     const cupoCls = lleno ? 'b-red' : (inscriptos.length>0 ? 'b-green' : 'b-gray');
     const cupoLabel = h.cupo!=null ? `${inscriptos.length}/${h.cupo}` : `${inscriptos.length} anotados`;
-    const chips = inscriptos.map(id=>{
-      const a=alumnos.find(x=>x.id===id);
-      const nombre = a?fullName(a):'(alumno eliminado)';
-      return `<span class="insc-chip">${nombre}<button onclick="quitarInscripto(${h.id},${id})" title="Sacar del turno">✕</button></span>`;
-    }).join('');
+    const chips = inscriptos.map(id=>renderInscChip(id,'horario',h.id)).join('');
     return`<div class="h-card">
       <div class="h-card-top" onclick="toggleCard(this)">
         <div class="h-card-hora">${h.hora||'—'}</div>
@@ -1738,7 +1761,7 @@ async function deleteHorario(id){
   }catch(e){ showToast('❌ Error al eliminar. Revisá tu conexión.', 'error'); }
 }
 
-// ── TRABAJO DE CAMPO (turnos de referencia, sin cupo ni inscriptos) ──
+// ── TRABAJO DE CAMPO (turnos con cupo e inscriptos, igual que gimnasio) ──
 const CAMPO_SLUG = {'Inteligencia de Juego':'inteligencia','Velocidad':'velocidad'};
 function renderCampoHorarios(){
   Object.entries(CAMPO_SLUG).forEach(([area,slug])=>{
@@ -1746,35 +1769,78 @@ function renderCampoHorarios(){
       .sort((a,b)=> DIAS.indexOf(a.dia)-DIAS.indexOf(b.dia) || (a.hora||'').localeCompare(b.hora||''));
     const el = document.getElementById('campo-list-'+slug);
     if(!list.length){ el.innerHTML = `<div class="campo-empty">Sin turnos cargados</div>`; return; }
-    el.innerHTML = list.map(c=>`<div class="campo-row">
-      <span class="campo-dia">${c.dia.slice(0,3)}</span>
-      <span class="campo-hora">${c.hora||'—'}</span>
-      <span class="campo-nota">${c.nota||''}</span>
-      <button class="campo-del" onclick="deleteCampoTurno(${c.id})" title="Eliminar">✕</button>
-    </div>`).join('');
+    el.innerHTML = list.map(c=>{
+      const inscriptos = c.inscriptos||[];
+      const disponibles = alumnos.filter(a=>!inscriptos.includes(a.id)).sort((a,b)=>fullName(a).localeCompare(fullName(b)));
+      const lleno = c.cupo!=null && inscriptos.length>=c.cupo;
+      const cupoCls = lleno ? 'b-red' : (inscriptos.length>0 ? 'b-green' : 'b-gray');
+      const cupoLabel = c.cupo!=null ? `${inscriptos.length}/${c.cupo}` : `${inscriptos.length} anotados`;
+      const chips = inscriptos.map(id=>renderInscChip(id,'campo',c.id)).join('');
+      return`<div class="h-card">
+        <div class="h-card-top" onclick="toggleCard(this)">
+          <div class="h-card-hora">${c.dia.slice(0,3)} · ${c.hora||'—'}</div>
+          <div class="h-card-info">
+            <div class="h-card-name">${c.nota||'Turno'}</div>
+            <div class="a-card-badges"><span class="badge ${cupoCls}">${cupoLabel}${lleno?' · Completo':''}</span></div>
+          </div>
+          <span class="chev">›</span>
+        </div>
+        <div class="h-card-detail"><div class="h-card-detail-inner">
+          <div class="insc-list">${chips || '<span class="insc-empty">Nadie anotado todavía</span>'}</div>
+          ${lleno ? '' : `<div class="insc-add">
+            <select class="filter-sel" id="add-insc-campo-${c.id}">
+              <option value="">Agregar alumno...</option>
+              ${disponibles.map(a=>`<option value="${a.id}">${fullName(a)}</option>`).join('')}
+            </select>
+            <button class="btn btn-primary" onclick="agregarInscriptoCampo(${c.id})">+ Agregar</button>
+          </div>`}
+          <div class="h-card-detail-actions">
+            <button class="btn" onclick="openCampoModal('${area}',${c.id})">✎ Editar</button>
+            <button class="btn btn-danger" onclick="deleteCampoTurno(${c.id})">Eliminar</button>
+          </div>
+        </div></div>
+      </div>`;
+    }).join('');
   });
 }
-let campoAreaTarget=null;
-function openCampoModal(area){
+let campoAreaTarget=null, editCampoId=null;
+function openCampoModal(area, id=null){
   campoAreaTarget=area;
-  document.getElementById('modal-campo-title').textContent = `Nuevo turno — ${area}`;
-  document.getElementById('c-dia').value=diaActual;
-  document.getElementById('c-hora').value='';
-  document.getElementById('c-nota').value='';
+  editCampoId=id;
+  document.getElementById('modal-campo-title').textContent = id?`Editar turno — ${area}`:`Nuevo turno — ${area}`;
+  if(id){
+    const c=campoHorarios.find(x=>x.id===id);
+    document.getElementById('c-dia').value=c.dia;
+    document.getElementById('c-hora').value=c.hora||'';
+    document.getElementById('c-cupo').value=c.cupo!=null?c.cupo:'';
+    document.getElementById('c-nota').value=c.nota||'';
+  }else{
+    document.getElementById('c-dia').value=diaActual;
+    document.getElementById('c-hora').value='';
+    document.getElementById('c-cupo').value='';
+    document.getElementById('c-nota').value='';
+  }
   document.getElementById('overlay-campo').classList.add('open');
 }
 async function saveCampoTurno(){
   const dia=document.getElementById('c-dia').value;
   const hora=document.getElementById('c-hora').value;
   if(!hora){alert('Ingresá la hora');return;}
+  const cupoVal=document.getElementById('c-cupo').value;
+  const cupo = cupoVal===''?null:Number(cupoVal);
   const nota=document.getElementById('c-nota').value.trim();
   const btn=document.querySelector('#overlay-campo .btn-primary');
   const originalText=btn.textContent; btn.disabled=true; btn.textContent='Guardando...';
   try{
-    const saved=await dbInsertCampoTurno({area:campoAreaTarget,dia,hora,nota});
-    campoHorarios.push(saved);
+    if(editCampoId){
+      const saved=await dbUpdateCampoTurno(editCampoId, {dia,hora,cupo,nota});
+      campoHorarios=campoHorarios.map(x=>x.id===editCampoId?saved:x);
+    }else{
+      const saved=await dbInsertCampoTurno({area:campoAreaTarget,dia,hora,cupo,nota,inscriptos:[]});
+      campoHorarios.push(saved);
+    }
     closeModal('overlay-campo'); renderCampoHorarios();
-    showToast('✅ Turno agregado','success');
+    showToast(editCampoId?'✅ Turno actualizado':'✅ Turno agregado','success');
   }catch(e){ showToast('❌ Error al guardar. Revisá tu conexión.', 'error'); }
   btn.disabled=false; btn.textContent=originalText;
 }
@@ -1786,6 +1852,75 @@ async function deleteCampoTurno(id){
     renderCampoHorarios();
     showToast('✅ Turno eliminado','success');
   }catch(e){ showToast('❌ Error al eliminar. Revisá tu conexión.', 'error'); }
+}
+async function agregarInscriptoCampo(cId){
+  const sel=document.getElementById('add-insc-campo-'+cId);
+  const alumnoId=Number(sel.value);
+  if(!alumnoId)return;
+  const c=campoHorarios.find(x=>x.id===cId);
+  const inscriptos=[...(c.inscriptos||[]), alumnoId];
+  try{
+    const saved=await dbUpdateCampoTurno(cId, {inscriptos});
+    campoHorarios=campoHorarios.map(x=>x.id===cId?saved:x);
+    renderCampoHorarios();
+    showToast('✅ Agregado al turno','success');
+  }catch(e){ showToast('❌ Error al anotar. Revisá tu conexión.', 'error'); }
+}
+async function quitarInscriptoCampo(cId, alumnoId){
+  const c=campoHorarios.find(x=>x.id===cId);
+  const inscriptos=(c.inscriptos||[]).filter(id=>id!==alumnoId);
+  try{
+    const saved=await dbUpdateCampoTurno(cId, {inscriptos});
+    campoHorarios=campoHorarios.map(x=>x.id===cId?saved:x);
+    renderCampoHorarios();
+    showToast('✅ Sacado del turno','success');
+  }catch(e){ showToast('❌ Error al actualizar. Revisá tu conexión.', 'error'); }
+}
+
+// ── ANOTAR UN ALUMNO TAMBIÉN EN OTRO TURNO (sin sacarlo del actual) ──
+let dupAlumnoId=null;
+function abrirDuplicarAlumno(tipoOrigen, idOrigen, alumnoId){
+  dupAlumnoId=alumnoId;
+  const a=alumnos.find(x=>x.id===alumnoId);
+  document.getElementById('dup-alumno-nombre').textContent = a?fullName(a):'';
+  const opts=[];
+  horarios.forEach(h=>{
+    if(tipoOrigen==='horario'&&h.id===idOrigen)return;
+    if((h.inscriptos||[]).includes(alumnoId))return;
+    opts.push(`<option value="horario:${h.id}">🏋️ ${h.dia} ${h.hora} — ${h.nombre||'Turno'}</option>`);
+  });
+  campoHorarios.forEach(c=>{
+    if(tipoOrigen==='campo'&&c.id===idOrigen)return;
+    if((c.inscriptos||[]).includes(alumnoId))return;
+    const icon = c.area==='Velocidad'?'⚡':'🧠';
+    opts.push(`<option value="campo:${c.id}">${icon} ${c.dia} ${c.hora} — ${c.area}</option>`);
+  });
+  const sel=document.getElementById('dup-turno');
+  sel.innerHTML = opts.length ? opts.join('') : '<option value="">No hay otros turnos disponibles</option>';
+  document.getElementById('overlay-dup-alumno').classList.add('open');
+}
+async function confirmarDuplicarAlumno(){
+  const val=document.getElementById('dup-turno').value;
+  if(!val){ alert('No hay otros turnos disponibles'); return; }
+  const [tipo,idStr]=val.split(':');
+  const id=Number(idStr);
+  const btn=document.querySelector('#overlay-dup-alumno .btn-primary');
+  const originalText=btn.textContent; btn.disabled=true; btn.textContent='Anotando...';
+  try{
+    if(tipo==='horario'){
+      const h=horarios.find(x=>x.id===id);
+      const saved=await dbUpdateHorario(id, {inscriptos:[...(h.inscriptos||[]), dupAlumnoId]});
+      horarios=horarios.map(x=>x.id===id?saved:x);
+    }else{
+      const c=campoHorarios.find(x=>x.id===id);
+      const saved=await dbUpdateCampoTurno(id, {inscriptos:[...(c.inscriptos||[]), dupAlumnoId]});
+      campoHorarios=campoHorarios.map(x=>x.id===id?saved:x);
+    }
+    closeModal('overlay-dup-alumno');
+    renderHorarios();
+    showToast('✅ Alumno anotado también en ese turno','success');
+  }catch(e){ showToast('❌ Error al anotar. Revisá tu conexión.', 'error'); }
+  btn.disabled=false; btn.textContent=originalText;
 }
 async function agregarInscripto(hId){
   const sel=document.getElementById('add-insc-'+hId);
@@ -1988,7 +2123,7 @@ function showToast(msg,type=''){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){['overlay-alumno','overlay-pago','overlay-tarifas','overlay-plan','overlay-historial','overlay-horario','overlay-gasto','overlay-mes-horarios','overlay-campo'].forEach(id=>closeModal(id));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){['overlay-alumno','overlay-pago','overlay-tarifas','overlay-plan','overlay-historial','overlay-horario','overlay-gasto','overlay-mes-horarios','overlay-campo','overlay-dup-alumno'].forEach(id=>closeModal(id));}});
 document.getElementById('today-badge').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 (async function init(){
   await Promise.all([load(), loadTarifas(), loadHorarios(), loadCampoHorarios(), loadPlanes(), loadGastos()]);
