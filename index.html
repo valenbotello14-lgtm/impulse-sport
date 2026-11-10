@@ -201,7 +201,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 .h-card-name{font-weight:600;font-size:13.5px;}
 .h-card.open .chev{transform:rotate(90deg);}
 .h-card-detail{max-height:0;overflow:hidden;transition:max-height .25s ease;background:var(--bg);}
-.h-card.open .h-card-detail{max-height:480px;}
+.h-card.open .h-card-detail{max-height:640px;}
 .h-card-detail-inner{display:flex;flex-direction:column;gap:12px;padding:14px;border-top:1px solid var(--border);}
 .insc-list{display:flex;flex-wrap:wrap;gap:6px;}
 .insc-empty{color:var(--text3);font-size:12.5px;}
@@ -209,9 +209,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 .insc-chip button{width:16px;height:16px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;line-height:1;padding:0;flex-shrink:0;}
 .insc-chip button:hover{background:var(--red);color:#fff;}
 .insc-add{display:flex;gap:8px;}
-.combo-wrap{position:relative;flex:1;min-width:0;}
+.combo-wrap{flex:1;min-width:0;}
 .combo-input{padding:0 10px;height:36px;width:100%;}
-.combo-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:220px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);z-index:50;}
+.combo-dropdown{display:none;margin-top:6px;max-height:220px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border);border-radius:10px;}
 .combo-dropdown.open{display:block;}
 .combo-item{padding:9px 12px;font-size:12.5px;cursor:pointer;}
 .combo-item:hover,.combo-item:active{background:var(--bg3);}
