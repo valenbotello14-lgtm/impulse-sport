@@ -189,6 +189,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 .btn-sm{height:28px;padding:0 10px;font-size:11.5px;}
 .campo-list{display:flex;flex-direction:column;gap:10px;}
 .campo-empty{font-size:12px;color:var(--text3);text-align:center;padding:14px 0;}
+.disp-day{margin-bottom:16px;}
+.disp-day:last-child{margin-bottom:0;}
+.disp-day-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;margin-bottom:8px;color:var(--cyan2);}
+.disp-empty{font-size:12px;color:var(--text3);padding:2px 0 10px;}
+.disp-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--border);border-radius:9px;background:var(--bg);margin-bottom:6px;}
+.disp-hora{font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--cyan2);min-width:48px;font-variant-numeric:tabular-nums;font-size:12.5px;}
+.disp-info{flex:1;min-width:0;font-size:12.5px;}
+.disp-tipo{color:var(--text3);font-size:11px;}
 @media(max-width:600px){.campo-areas{grid-template-columns:1fr;}}
 .day-pill{flex-shrink:0;height:36px;padding:0 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;}
 .day-pill:hover{border-color:var(--border2);color:var(--text);}
@@ -447,6 +455,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
         <button class="day-pill" data-dia="Sábado" onclick="cambiarDia('Sábado')">Sáb</button>
         <button class="day-pill" data-dia="Domingo" onclick="cambiarDia('Domingo')">Dom</button>
       </div>
+      <button class="btn" onclick="openDisponibilidad()">📋 Disponibilidad</button>
       <button class="btn" onclick="openMesHorarios()">📅 Ver mes</button>
       <button class="btn btn-primary" onclick="openHorarioModal()">+ Nuevo horario</button>
     </div>
@@ -645,7 +654,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
       <div class="form-group"><label>Hora</label><input type="time" id="h-hora"></div>
     </div>
     <div class="form-group"><label>Nombre de la clase / turno</label><input type="text" id="h-nombre" placeholder="Ej: Funcional, Spinning..."></div>
-    <div class="form-group"><label>Cupo máximo (dejar vacío = sin límite)</label><input type="number" id="h-cupo" placeholder="15"></div>
+    <div class="form-group"><label>Cupo máximo (dejar vacío = sin límite)</label><input type="number" id="h-cupo" placeholder="8"></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('overlay-horario')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveHorario()">Guardar</button>
@@ -671,7 +680,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
       </div>
       <div class="form-group"><label>Hora</label><input type="time" id="c-hora"></div>
     </div>
-    <div class="form-group"><label>Cupo máximo (dejar vacío = sin límite)</label><input type="number" id="c-cupo" placeholder="15"></div>
+    <div class="form-group"><label>Cupo máximo (dejar vacío = sin límite)</label><input type="number" id="c-cupo" placeholder="8"></div>
     <div class="form-group"><label>Nota (opcional)</label><input type="text" id="c-nota" placeholder="Ej: Cancha municipal..."></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('overlay-campo')">Cancelar</button>
@@ -691,6 +700,18 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('overlay-dup-alumno')">Cancelar</button>
       <button class="btn btn-primary" onclick="confirmarDuplicarAlumno()">Anotar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DISPONIBILIDAD DE CUPOS (lunes a sábado) -->
+<div class="overlay" id="overlay-disponibilidad" onclick="handleOvClick(event,'overlay-disponibilidad')">
+  <div class="modal" style="max-width:560px">
+    <h3><span>📋</span> Disponibilidad de cupos</h3>
+    <p style="font-size:11.5px;color:var(--text3);margin:0 0 14px;">Lunes a sábado — gimnasio y trabajo de campo, con los cupos libres de cada turno.</p>
+    <div id="disponibilidad-body" style="max-height:60vh;overflow-y:auto;"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('overlay-disponibilidad')">Cerrar</button>
     </div>
   </div>
 </div>
@@ -1640,6 +1661,41 @@ function renderWeekGrid(){
 
 // Vista por mes: mismo patrón semanal repetido día por día del mes (los horarios son fijos por día de semana).
 let mesHorariosActual = mesActualKey();
+// ── DISPONIBILIDAD DE CUPOS (lunes a sábado, gimnasio + trabajo de campo) ──
+function openDisponibilidad(){
+  renderDisponibilidad();
+  document.getElementById('overlay-disponibilidad').classList.add('open');
+}
+function renderDisponibilidad(){
+  const diasLaborales = DIAS.filter(d=>d!=='Domingo');
+  const html = diasLaborales.map(d=>{
+    const turnosGym = horarios.filter(h=>h.dia===d).map(h=>({hora:h.hora, cupo:h.cupo, inscriptos:h.inscriptos||[], label:h.nombre||'Turno', tipo:'Gimnasio'}));
+    const turnosCampo = campoHorarios.filter(c=>c.dia===d).map(c=>({hora:c.hora, cupo:c.cupo, inscriptos:c.inscriptos||[], label:c.nota||'Turno', tipo:c.area}));
+    const todos = [...turnosGym, ...turnosCampo].sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
+    let filas;
+    if(!todos.length){
+      filas = `<div class="disp-empty">Sin turnos</div>`;
+    }else{
+      filas = todos.map(t=>{
+        const n = t.inscriptos.length;
+        let cls, label;
+        if(t.cupo==null){ cls='b-blue'; label='Sin límite'; }
+        else{
+          const libres = Math.max(0, t.cupo-n);
+          if(libres<=0){ cls='b-red'; label='Completo'; }
+          else{ cls='b-green'; label=`${libres} libre${libres===1?'':'s'}`; }
+        }
+        return `<div class="disp-row">
+          <span class="disp-hora">${t.hora||'—'}</span>
+          <span class="disp-info">${t.label} <span class="disp-tipo">· ${t.tipo}</span></span>
+          <span class="badge ${cls}">${label}</span>
+        </div>`;
+      }).join('');
+    }
+    return `<div class="disp-day"><div class="disp-day-title">${d}</div>${filas}</div>`;
+  }).join('');
+  document.getElementById('disponibilidad-body').innerHTML = html;
+}
 function openMesHorarios(){
   mesHorariosActual = mesActualKey();
   renderMesHorarios();
@@ -2185,7 +2241,7 @@ function showToast(msg,type=''){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){['overlay-alumno','overlay-pago','overlay-tarifas','overlay-plan','overlay-historial','overlay-horario','overlay-gasto','overlay-mes-horarios','overlay-campo','overlay-dup-alumno'].forEach(id=>closeModal(id));}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){['overlay-alumno','overlay-pago','overlay-tarifas','overlay-plan','overlay-historial','overlay-horario','overlay-gasto','overlay-mes-horarios','overlay-campo','overlay-dup-alumno','overlay-disponibilidad'].forEach(id=>closeModal(id));}});
 document.getElementById('today-badge').textContent=new Date().toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 (async function init(){
   await Promise.all([load(), loadTarifas(), loadHorarios(), loadCampoHorarios(), loadPlanes(), loadGastos()]);
