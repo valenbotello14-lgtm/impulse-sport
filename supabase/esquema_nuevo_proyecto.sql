@@ -57,6 +57,7 @@ create table if not exists campo_horarios (
   nota text not null default '',
   cupo integer,                 -- null = sin límite
   inscriptos jsonb not null default '[]'::jsonb,  -- array de ids de alumnos
+  fechas_uso jsonb not null default '[]'::jsonb,  -- array de fechas 'YYYY-MM-DD' de uso real
   created_at timestamptz not null default now()
 );
 

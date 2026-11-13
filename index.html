@@ -228,6 +228,18 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 .combo-item.selected .combo-check{background:var(--cyan2);border-color:var(--cyan2);color:#04111f;}
 .combo-empty{padding:9px 12px;font-size:12px;color:var(--text3);}
 .combo-footer .btn{width:100%;justify-content:center;margin-top:6px;}
+.uso-section{border-top:1px dashed var(--border);padding-top:12px;margin-top:2px;}
+.uso-title{font-size:11.5px;font-weight:700;color:var(--text2);margin-bottom:8px;}
+.uso-add{display:flex;gap:8px;margin-top:8px;}
+.uso-add input{flex:1;min-width:0;}
+.gcat-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;}
+.gcat-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+.gcat-row{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+.gcat-row-top{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;margin-bottom:6px;gap:8px;}
+.gcat-row-top .gcat-nombre{font-weight:600;}
+.gcat-row-top .gcat-monto{font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--red);white-space:nowrap;}
+.gcat-bar-bg{height:6px;border-radius:3px;background:var(--bg3);overflow:hidden;}
+.gcat-bar-fill{height:100%;border-radius:3px;background:var(--red);}
 .h-card-detail-actions{display:flex;gap:8px;}
 
 /* MODAL */
@@ -519,6 +531,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
       <button class="btn" onclick="toggleBalanceStatsPanel()"><span id="balance-stats-toggle-label">📊 Ver estadísticas</span></button>
       <button class="btn btn-primary" onclick="openGastoModal()">+ Nuevo gasto</button>
     </div>
+    <div id="gcat-breakdown"></div>
     <div class="card-list" id="tbody-gastos"></div>
   </section>
 
@@ -1849,6 +1862,8 @@ function renderCampoHorarios(){
       const cupoCls = lleno ? 'b-red' : (inscriptos.length>0 ? 'b-green' : 'b-gray');
       const cupoLabel = c.cupo!=null ? `${inscriptos.length}/${c.cupo}` : `${inscriptos.length} anotados`;
       const chips = inscriptos.map(id=>renderInscChip(id,'campo',c.id)).join('');
+      const fechasUso = (c.fechas_uso||[]).slice().sort().reverse();
+      const fechaChips = fechasUso.map(f=>`<span class="insc-chip">${fmtDate(f)}<button onclick="quitarFechaUso(${c.id},'${f}')" title="Quitar">✕</button></span>`).join('');
       return`<div class="h-card">
         <div class="h-card-top" onclick="toggleCard(this)">
           <div class="h-card-hora">${c.dia.slice(0,3)} · ${c.hora||'—'}</div>
@@ -1867,6 +1882,14 @@ function renderCampoHorarios(){
               <div class="combo-footer" id="combo-footer-campo-${c.id}"></div>
             </div>
           </div>`}
+          <div class="uso-section">
+            <div class="uso-title">📅 Días que se usó la cancha</div>
+            <div class="insc-list">${fechaChips || '<span class="insc-empty">Sin fechas registradas</span>'}</div>
+            <div class="uso-add">
+              <input type="date" id="uso-fecha-${c.id}" value="${todayStr()}">
+              <button class="btn btn-sm" onclick="agregarFechaUso(${c.id})">+ Agregar</button>
+            </div>
+          </div>
           <div class="h-card-detail-actions">
             <button class="btn" onclick="openCampoModal('${area}',${c.id})">✎ Editar</button>
             <button class="btn btn-danger" onclick="deleteCampoTurno(${c.id})">Eliminar</button>
@@ -1909,7 +1932,7 @@ async function saveCampoTurno(){
       const saved=await dbUpdateCampoTurno(editCampoId, {dia,hora,cupo,nota});
       campoHorarios=campoHorarios.map(x=>x.id===editCampoId?saved:x);
     }else{
-      const saved=await dbInsertCampoTurno({area:campoAreaTarget,dia,hora,cupo,nota,inscriptos:[]});
+      const saved=await dbInsertCampoTurno({area:campoAreaTarget,dia,hora,cupo,nota,inscriptos:[],fechas_uso:[]});
       campoHorarios.push(saved);
     }
     closeModal('overlay-campo'); renderCampoHorarios();
@@ -1934,6 +1957,32 @@ async function quitarInscriptoCampo(cId, alumnoId){
     campoHorarios=campoHorarios.map(x=>x.id===cId?saved:x);
     renderCampoHorarios();
     showToast('✅ Sacado del turno','success');
+  }catch(e){ showToast('❌ Error al actualizar. Revisá tu conexión.', 'error'); }
+}
+
+// ── DÍAS REALES DE USO DE LA CANCHA (además del día fijo semanal) ──
+async function agregarFechaUso(cId){
+  const input=document.getElementById('uso-fecha-'+cId);
+  const fecha=input.value;
+  if(!fecha)return;
+  const c=campoHorarios.find(x=>x.id===cId);
+  if((c.fechas_uso||[]).includes(fecha)){ showToast('Esa fecha ya estaba cargada',''); return; }
+  const fechas_uso=[...(c.fechas_uso||[]), fecha];
+  try{
+    const saved=await dbUpdateCampoTurno(cId, {fechas_uso});
+    campoHorarios=campoHorarios.map(x=>x.id===cId?saved:x);
+    renderCampoHorarios();
+    showToast('✅ Fecha agregada','success');
+  }catch(e){ showToast('❌ Error al guardar. Revisá tu conexión.', 'error'); }
+}
+async function quitarFechaUso(cId, fecha){
+  const c=campoHorarios.find(x=>x.id===cId);
+  const fechas_uso=(c.fechas_uso||[]).filter(f=>f!==fecha);
+  try{
+    const saved=await dbUpdateCampoTurno(cId, {fechas_uso});
+    campoHorarios=campoHorarios.map(x=>x.id===cId?saved:x);
+    renderCampoHorarios();
+    showToast('✅ Fecha quitada','success');
   }catch(e){ showToast('❌ Error al actualizar. Revisá tu conexión.', 'error'); }
 }
 
@@ -2137,6 +2186,20 @@ function renderBalance(){
   ne.textContent=(neto<0?'-':'')+fmtMoney(Math.abs(neto));
   ne.className='stat-val '+(neto>=0?'sv-green':'sv-red');
   const list=[...gastos].filter(g=>g.mes===mes).sort((a,b)=>Number(b.monto||0)-Number(a.monto||0));
+  const catTotales={};
+  list.forEach(g=>{ const c=g.categoria||'Otro'; catTotales[c]=(catTotales[c]||0)+Number(g.monto||0); });
+  const catList=Object.entries(catTotales).sort((a,b)=>b[1]-a[1]);
+  const catEl=document.getElementById('gcat-breakdown');
+  if(!catList.length){ catEl.innerHTML=''; }
+  else{
+    const max=catList[0][1];
+    catEl.innerHTML = `<div class="gcat-title">Gastos por categoría — ${mesLabel(mes)}</div><div class="gcat-list">` +
+      catList.map(([cat,total])=>`
+        <div class="gcat-row">
+          <div class="gcat-row-top"><span class="gcat-nombre">${cat}</span><span class="gcat-monto">${fmtMoney(total)}</span></div>
+          <div class="gcat-bar-bg"><div class="gcat-bar-fill" style="width:${max?Math.round(total/max*100):0}%"></div></div>
+        </div>`).join('') + `</div>`;
+  }
   const tb=document.getElementById('tbody-gastos');
   if(!list.length){tb.innerHTML=`<div class="empty"><div class="empty-icon">💸</div>No hay gastos cargados para ${mesLabel(mes)}</div>`;}
   else tb.innerHTML=list.map(g=>`
