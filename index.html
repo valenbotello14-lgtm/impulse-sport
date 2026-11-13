@@ -230,8 +230,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--cyan2);box-shadow:0 0
 .combo-footer .btn{width:100%;justify-content:center;margin-top:6px;}
 .uso-section{border-top:1px dashed var(--border);padding-top:12px;margin-top:2px;}
 .uso-title{font-size:11.5px;font-weight:700;color:var(--text2);margin-bottom:8px;}
-.uso-add{display:flex;gap:8px;margin-top:8px;}
-.uso-add input{flex:1;min-width:0;}
+.uso-add{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.uso-add input[type=date]{flex:1 1 140px;min-width:0;}
+.uso-add input[type=number]{flex:1 1 90px;min-width:0;}
+.uso-hint{font-size:11px;color:var(--text3);margin-top:6px;}
 .gcat-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;}
 .gcat-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
 .gcat-row{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
@@ -1862,8 +1864,9 @@ function renderCampoHorarios(){
       const cupoCls = lleno ? 'b-red' : (inscriptos.length>0 ? 'b-green' : 'b-gray');
       const cupoLabel = c.cupo!=null ? `${inscriptos.length}/${c.cupo}` : `${inscriptos.length} anotados`;
       const chips = inscriptos.map(id=>renderInscChip(id,'campo',c.id)).join('');
-      const fechasUso = (c.fechas_uso||[]).slice().sort().reverse();
-      const fechaChips = fechasUso.map(f=>`<span class="insc-chip">${fmtDate(f)}<button onclick="quitarFechaUso(${c.id},'${f}')" title="Quitar">✕</button></span>`).join('');
+      const fechasUso = normalizarFechasUso(c).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+      const fechaChips = fechasUso.map(f=>`<span class="insc-chip">${fmtDate(f.fecha)}${f.monto?` · ${fmtMoney(f.monto)}`:''}<button onclick="quitarFechaUso(${c.id},'${f.fecha}')" title="Quitar">✕</button></span>`).join('');
+      const ultimoMonto = fechasUso.length && fechasUso[0].monto ? fechasUso[0].monto : '';
       return`<div class="h-card">
         <div class="h-card-top" onclick="toggleCard(this)">
           <div class="h-card-hora">${c.dia.slice(0,3)} · ${c.hora||'—'}</div>
@@ -1887,8 +1890,10 @@ function renderCampoHorarios(){
             <div class="insc-list">${fechaChips || '<span class="insc-empty">Sin fechas registradas</span>'}</div>
             <div class="uso-add">
               <input type="date" id="uso-fecha-${c.id}" value="${todayStr()}">
+              <input type="number" id="uso-monto-${c.id}" placeholder="$ valor" value="${ultimoMonto}">
               <button class="btn btn-sm" onclick="agregarFechaUso(${c.id})">+ Agregar</button>
             </div>
+            <div class="uso-hint">El valor se suma como gasto de "Cancha" en el Balance del mes de esa fecha.</div>
           </div>
           <div class="h-card-detail-actions">
             <button class="btn" onclick="openCampoModal('${area}',${c.id})">✎ Editar</button>
@@ -1961,13 +1966,20 @@ async function quitarInscriptoCampo(cId, alumnoId){
 }
 
 // ── DÍAS REALES DE USO DE LA CANCHA (además del día fijo semanal) ──
+// Cada entrada es {fecha,monto}; el monto se suma como gasto de "Cancha" en el Balance de ese mes.
+function normalizarFechasUso(c){
+  return (c.fechas_uso||[]).map(f=> typeof f==='string' ? {fecha:f,monto:0} : f);
+}
 async function agregarFechaUso(cId){
-  const input=document.getElementById('uso-fecha-'+cId);
-  const fecha=input.value;
-  if(!fecha)return;
+  const fechaInput=document.getElementById('uso-fecha-'+cId);
+  const montoInput=document.getElementById('uso-monto-'+cId);
+  const fecha=fechaInput.value;
+  if(!fecha){alert('Elegí una fecha');return;}
+  const monto=Number(montoInput.value)||0;
   const c=campoHorarios.find(x=>x.id===cId);
-  if((c.fechas_uso||[]).includes(fecha)){ showToast('Esa fecha ya estaba cargada',''); return; }
-  const fechas_uso=[...(c.fechas_uso||[]), fecha];
+  const existentes=normalizarFechasUso(c);
+  if(existentes.some(f=>f.fecha===fecha)){ showToast('Esa fecha ya estaba cargada',''); return; }
+  const fechas_uso=[...existentes, {fecha,monto}];
   try{
     const saved=await dbUpdateCampoTurno(cId, {fechas_uso});
     campoHorarios=campoHorarios.map(x=>x.id===cId?saved:x);
@@ -1977,7 +1989,7 @@ async function agregarFechaUso(cId){
 }
 async function quitarFechaUso(cId, fecha){
   const c=campoHorarios.find(x=>x.id===cId);
-  const fechas_uso=(c.fechas_uso||[]).filter(f=>f!==fecha);
+  const fechas_uso=normalizarFechasUso(c).filter(f=>f.fecha!==fecha);
   try{
     const saved=await dbUpdateCampoTurno(cId, {fechas_uso});
     campoHorarios=campoHorarios.map(x=>x.id===cId?saved:x);
@@ -2166,8 +2178,15 @@ function renderPagosStats(){
 }
 
 // ── BALANCE (ingresos vs. gastos) ─────────────────────────────────────────
+function totalCanchaMes(mes){
+  let total=0;
+  campoHorarios.forEach(c=>{
+    normalizarFechasUso(c).forEach(f=>{ if(f.fecha && f.fecha.slice(0,7)===mes) total+=Number(f.monto||0); });
+  });
+  return total;
+}
 function totalGastosMes(mes){
-  return gastos.filter(g=>g.mes===mes).reduce((s,g)=>s+Number(g.monto||0),0);
+  return gastos.filter(g=>g.mes===mes).reduce((s,g)=>s+Number(g.monto||0),0) + totalCanchaMes(mes);
 }
 let mesBalanceActual = mesActualKey();
 function cambiarMesBalance(delta){ mesBalanceActual=addMonthKey(mesBalanceActual,delta); renderBalance(); }
@@ -2188,6 +2207,8 @@ function renderBalance(){
   const list=[...gastos].filter(g=>g.mes===mes).sort((a,b)=>Number(b.monto||0)-Number(a.monto||0));
   const catTotales={};
   list.forEach(g=>{ const c=g.categoria||'Otro'; catTotales[c]=(catTotales[c]||0)+Number(g.monto||0); });
+  const canchaMes=totalCanchaMes(mes);
+  if(canchaMes>0) catTotales['Cancha']=(catTotales['Cancha']||0)+canchaMes;
   const catList=Object.entries(catTotales).sort((a,b)=>b[1]-a[1]);
   const catEl=document.getElementById('gcat-breakdown');
   if(!catList.length){ catEl.innerHTML=''; }
